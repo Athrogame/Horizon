@@ -4,18 +4,14 @@ using UnityEngine.InputSystem; // New Input System
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Movement")]
-    [Tooltip("Movement speed in units per second.")]
     public float moveSpeed = 5f;
 
-    [Tooltip("How quickly the player accelerates toward the target speed.")]
     public float acceleration = 20f;
 
     private Rigidbody2D rb;
     private Vector2 moveInput;
 
-    [Header("Input")]
-    [Tooltip("Reference to the Move action from your Input Actions asset.")]
+
     public InputActionReference moveActionReference;
 
     private InputAction moveAction;
