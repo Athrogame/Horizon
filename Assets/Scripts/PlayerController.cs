@@ -2,23 +2,30 @@ using UnityEngine;
 using UnityEngine.InputSystem; // New Input System
 
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("Movement")]
     public float moveSpeed = 5f;
-
     public float acceleration = 20f;
 
-    private Rigidbody2D rb;
-    private Vector2 moveInput;
-
-
+    [Header("Input")]
     public InputActionReference moveActionReference;
 
+    private Rigidbody2D rb;
+    private Animator animator;
+    private Vector2 moveInput;
     private InputAction moveAction;
+
+    // Animation parameter names
+    private static readonly int MoveX = Animator.StringToHash("MoveX");
+    private static readonly int MoveY = Animator.StringToHash("MoveY");
+    private static readonly int IsMoving = Animator.StringToHash("IsMoving");
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
 
         // For a top-down controller we don't want gravity pulling the player down
         rb.gravityScale = 0f;
@@ -80,6 +87,20 @@ public class PlayerController : MonoBehaviour
                 // Vertical movement
                 cardinal = new Vector2(0f, Mathf.Sign(input.y));
             }
+        }
+
+        // Update animations based on movement direction
+        if (animator != null)
+        {
+            bool isMoving = cardinal != Vector2.zero;
+            animator.SetBool(IsMoving, isMoving);
+            
+            if (isMoving)
+            {
+                animator.SetFloat(MoveX, cardinal.x);
+                animator.SetFloat(MoveY, cardinal.y);
+            }
+            // When idle, keep the last direction values so the idle animation matches the last facing direction
         }
 
         // Target velocity based on cardinal direction

@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: 2c03b961ae1944e0c8de781bbef519c9
+guid: 2e8468939289f442c9377fcd0fb00097
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4723107735738678597
-    second: Idle_0
+      213: -7050993540882883828
+    second: Idle 1_0
   - first:
-      213: -7385789195546760866
-    second: Idle_1
+      213: 760058600049143939
+    second: Idle 1_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,7 +116,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Idle_0
+      name: Idle 1_0
       rect:
         serializedVersion: 2
         x: 39
@@ -131,14 +131,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 54d7a982679db8140800000000000000
-      internalID: 4723107735738678597
+      spriteID: c0b1a1a7bb6d52e90800000000000000
+      internalID: -7050993540882883828
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Idle_1
+      name: Idle 1_1
       rect:
         serializedVersion: 2
         x: 139
@@ -153,8 +153,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e596485bbd7608990800000000000000
-      internalID: -7385789195546760866
+      spriteID: 380f86015454c8a00800000000000000
+      internalID: 760058600049143939
       vertices: []
       indices: 
       edges: []
@@ -163,7 +163,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: c19043358dce14a54a4a84c83d7c815d
+    spriteID: 13fd31a69faba4e4989986bf63f530c3
     internalID: 0
     vertices: []
     indices: 
@@ -175,8 +175,8 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Idle_0: 4723107735738678597
-      Idle_1: -7385789195546760866
+      Idle 1_0: -7050993540882883828
+      Idle 1_1: 760058600049143939
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
