@@ -17,10 +17,14 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveInput;
     private InputAction moveAction;
 
-    // Animation parameter names
+    // Animation parameter names (left = -1, right = 1; only horizontal for left/right idles)
     private static readonly int MoveX = Animator.StringToHash("MoveX");
     private static readonly int MoveY = Animator.StringToHash("MoveY");
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
+
+    // Last direction sent to animator (so idle keeps the same pose as when you stopped)
+    private float lastMoveX = 1f;
+    private float lastMoveY = 0f;
 
     private void Awake()
     {
@@ -30,6 +34,9 @@ public class PlayerController : MonoBehaviour
         // For a top-down controller we don't want gravity pulling the player down
         rb.gravityScale = 0f;
         rb.freezeRotation = true;
+
+        // Smooth position between physics steps so the camera (LateUpdate) doesn't see jitter/teleporting
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         // Get the Move action from the reference
         if (moveActionReference != null)
@@ -89,18 +96,30 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Update animations based on movement direction
+        // Update animations: keep same MoveX/MoveY when you stop so idle matches last walk direction
         if (animator != null)
         {
             bool isMoving = cardinal != Vector2.zero;
-            animator.SetBool(IsMoving, isMoving);
-            
+
             if (isMoving)
             {
-                animator.SetFloat(MoveX, cardinal.x);
-                animator.SetFloat(MoveY, cardinal.y);
+                // While moving: set direction and remember it for when we stop
+                if (cardinal.x != 0f)
+                {
+                    lastMoveX = cardinal.x;
+                    lastMoveY = 0f;
+                }
+                else
+                {
+                    lastMoveX = 0f;
+                    lastMoveY = cardinal.y;
+                }
             }
-            // When idle, keep the last direction values so the idle animation matches the last facing direction
+            // When idle we keep lastMoveX and lastMoveY unchanged
+
+            animator.SetBool(IsMoving, isMoving);
+            animator.SetFloat(MoveX, lastMoveX);
+            animator.SetFloat(MoveY, lastMoveY);
         }
 
         // Target velocity based on cardinal direction

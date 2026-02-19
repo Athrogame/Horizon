@@ -1,13 +1,19 @@
 fileFormatVersion: 2
-guid: 2e8468939289f442c9377fcd0fb00097
+guid: b2ed8b2d65e084a57a87344a1ab6e528
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7050993540882883828
-    second: Idle 1_0
+      213: -6201019692056567399
+    second: WalkRight_0
   - first:
-      213: 760058600049143939
-    second: Idle 1_1
+      213: -7852898016727190981
+    second: WalkRight_1
+  - first:
+      213: 3771676678745289610
+    second: WalkRight_2
+  - first:
+      213: -3566616766442689571
+    second: WalkRight_3
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,12 +122,12 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Idle 1_0
+      name: WalkRight_0
       rect:
         serializedVersion: 2
-        x: 39
-        y: 35
-        width: 23
+        x: 11
+        y: 12
+        width: 24
         height: 33
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -131,19 +137,41 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c0b1a1a7bb6d52e90800000000000000
-      internalID: -7050993540882883828
+      spriteID: 99124c9c17d81f9a0800000000000000
+      internalID: -6201019692056567399
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Idle 1_1
+      name: WalkRight_1
       rect:
         serializedVersion: 2
-        x: 139
-        y: 35
-        width: 23
+        x: 61
+        y: 12
+        width: 24
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b323b973cd6e40390800000000000000
+      internalID: -7852898016727190981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkRight_2
+      rect:
+        serializedVersion: 2
+        x: 111
+        y: 12
+        width: 24
         height: 33
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -153,8 +181,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 380f86015454c8a00800000000000000
-      internalID: 760058600049143939
+      spriteID: a83fc34c4ffa75430800000000000000
+      internalID: 3771676678745289610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkRight_3
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 12
+        width: 24
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddb2b3a92f4d08ec0800000000000000
+      internalID: -3566616766442689571
       vertices: []
       indices: 
       edges: []
@@ -163,7 +213,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 13fd31a69faba4e4989986bf63f530c3
+    spriteID: 436f6ebc79fb04c948162389eb9521bc
     internalID: 0
     vertices: []
     indices: 
@@ -171,12 +221,12 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries:
-      - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+      entries: []
     nameFileIdTable:
-      Idle 1_0: -7050993540882883828
-      Idle 1_1: 760058600049143939
+      WalkRight_0: -6201019692056567399
+      WalkRight_1: -7852898016727190981
+      WalkRight_2: 3771676678745289610
+      WalkRight_3: -3566616766442689571
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

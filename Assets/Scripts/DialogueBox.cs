@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
@@ -8,8 +7,8 @@ using UnityEngine.InputSystem;
 public class DialogueBox : MonoBehaviour
 {
     [Header("Text Components")]
-    [Tooltip("The TextMeshProUGUI component that displays the dialogue. If null, will try to find one.")]
-    public TextMeshProUGUI dialogueText;
+    [Tooltip("The UI Text component that displays the dialogue. If null, will try to find one in children.")]
+    public Text dialogueText;
     
     [Tooltip("Optional: Image/GameObject that shows when there's more text to read (blinking arrow, etc.)")]
     public GameObject continueIndicator;
@@ -73,15 +72,7 @@ public class DialogueBox : MonoBehaviour
         // Auto-find dialogue text if not assigned
         if (dialogueText == null)
         {
-            dialogueText = GetComponentInChildren<TextMeshProUGUI>();
-            if (dialogueText == null)
-            {
-                Text textComponent = GetComponentInChildren<Text>();
-                if (textComponent != null)
-                {
-                    Debug.LogWarning("DialogueBox: Found legacy Text component. Consider using TextMeshProUGUI for better performance.");
-                }
-            }
+            dialogueText = GetComponentInChildren<Text>();
         }
 
         // Set up input
@@ -91,8 +82,8 @@ public class DialogueBox : MonoBehaviour
         }
         else
         {
-            // Create default input action for Space/Z
-            advanceInput = new InputAction(binding: "<Keyboard>/space");
+            advanceInput = new InputAction(type: InputActionType.Button);
+            advanceInput.AddBinding("<Keyboard>/space");
             advanceInput.AddBinding("<Keyboard>/z");
             advanceInput.AddBinding("<Keyboard>/enter");
         }
@@ -111,18 +102,16 @@ public class DialogueBox : MonoBehaviour
     private void OnEnable()
     {
         advanceInput?.Enable();
-        advanceInput?.performed += OnAdvanceInput;
     }
 
     private void OnDisable()
     {
-        advanceInput?.performed -= OnAdvanceInput;
         advanceInput?.Disable();
     }
 
-    private void OnAdvanceInput(InputAction.CallbackContext context)
+    private void Update()
     {
-        if (canAdvance)
+        if (canAdvance && advanceInput != null && advanceInput.WasPressedThisFrame())
         {
             AdvanceDialogue();
         }
@@ -193,6 +182,13 @@ public class DialogueBox : MonoBehaviour
 
     private IEnumerator TypewriterEffect(string fullText)
     {
+        if (dialogueText == null)
+        {
+            isDisplayingText = false;
+            canAdvance = true;
+            yield break;
+        }
+
         isDisplayingText = true;
         canAdvance = false;
         
