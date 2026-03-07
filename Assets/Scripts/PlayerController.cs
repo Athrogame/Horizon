@@ -23,8 +23,8 @@ public class PlayerController : MonoBehaviour
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
 
     // Last direction sent to animator (so idle keeps the same pose as when you stopped)
-    private float lastMoveX = 1f;
-    private float lastMoveY = 0f;
+    private float lastMoveX = 0f;
+    private float lastMoveY = -1f;
 
     private void Awake()
     {

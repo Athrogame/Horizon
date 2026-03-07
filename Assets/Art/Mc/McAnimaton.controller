@@ -638,7 +638,7 @@ AnimatorStateMachine:
     m_Position: {x: 1280, y: 930, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -3971619990037516343}
-    m_Position: {x: 250, y: 180, z: 0}
+    m_Position: {x: 280, y: 220, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 5169700267718166789}
     m_Position: {x: 760, y: 150, z: 0}
@@ -874,7 +874,7 @@ AnimatorController:
     m_Controller: {fileID: 9100000}
   - m_Name: MoveY
     m_Type: 1
-    m_DefaultFloat: 0
+    m_DefaultFloat: -1
     m_DefaultInt: 0
     m_DefaultBool: 0
     m_Controller: {fileID: 9100000}

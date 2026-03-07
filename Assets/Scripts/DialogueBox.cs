@@ -38,8 +38,11 @@ public class DialogueBox : MonoBehaviour
     [Tooltip("Duration in seconds for slide-down animation when closing.")]
     public float slideDownDuration = 0.2f;
     
+    [Tooltip("Extra delay in seconds after slide-down before deactivating the UI.")]
+    public float closeDelay = 2.0f;
+    
     [Tooltip("How far below the screen the dialogue box starts (in pixels or units).")]
-    public float hiddenOffset = 200f;
+    public float hiddenOffset = 2000f;
 
     [Header("Forced Rect Transform (applied when dialogue shows)")]
     [Tooltip("When enabled, the dialogue box is forced to these values each time it opens.")]
@@ -61,6 +64,20 @@ public class DialogueBox : MonoBehaviour
     [Tooltip("List of dialogue lines to display. Use StartDialogue() to begin showing them.")]
     public List<string> dialogueLines = new List<string>();
 
+    [Header("Speaker Box")]
+    [Tooltip("Optional: GameObject for the speaker's icon box that appears above the dialogue box.")]
+    public GameObject speakerBox;
+    
+    [Tooltip("Vertical offset for the speaker box above the dialogue box.")]
+    public float speakerOffsetY = 50f;
+
+    [Tooltip("When enabled, the speaker box will be forced to these rect transform values each time dialogue opens. Only a single size is used; the box will always be square.")]
+    public bool useForcedSpeakerRect = true;
+    public float speakerForcedPosX = 0f;
+    public float speakerForcedPosY = 0f;
+    [Tooltip("Width and height (same value) the speaker box will be forced to.")]
+    public float speakerForcedSize = 100f;
+
     private List<string> dialogueQueue = new List<string>();
     private int currentDialogueIndex = 0;
     private bool isDisplayingText = false;
@@ -69,6 +86,11 @@ public class DialogueBox : MonoBehaviour
     private Coroutine slideAnimationCoroutine;
     private InputAction advanceInput;
     
+    private RectTransform speakerRectTransform;
+    private Vector2 speakerVisiblePosition;
+    private Vector2 speakerHiddenPosition;
+
+    // Core layout variables for dialogue box animation
     private RectTransform rectTransform;
     private Vector2 visiblePosition;
     private Vector2 hiddenPosition;
@@ -89,6 +111,18 @@ public class DialogueBox : MonoBehaviour
         visiblePosition = rectTransform.anchoredPosition;
         designScale = rectTransform.localScale;
         hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y - hiddenOffset);
+
+        // Initialize speaker box if assigned
+        if (speakerBox != null)
+        {
+            speakerRectTransform = speakerBox.GetComponent<RectTransform>();
+            if (speakerRectTransform != null)
+            {
+                speakerVisiblePosition = speakerRectTransform.anchoredPosition;
+                speakerHiddenPosition = new Vector2(speakerVisiblePosition.x, speakerVisiblePosition.y - hiddenOffset);
+                speakerBox.SetActive(false);
+            }
+        }
 
         // Auto-find dialogue text if not assigned
         if (dialogueText == null)
@@ -167,6 +201,24 @@ public class DialogueBox : MonoBehaviour
         }
         SetActiveRecursive(transform, true);
 
+        // Activate speaker box if assigned
+        if (speakerBox != null && !speakerBox.activeSelf)
+        {
+            speakerBox.SetActive(true);
+        }
+
+        // Immediately place both boxes offscreen so they don't flash in their editor positions
+        if (rectTransform != null)
+        {
+            rectTransform.anchoredPosition = hiddenPosition;
+        }
+        if (speakerRectTransform != null)
+        {
+            // ensure speakerHiddenPosition is up to date
+            speakerHiddenPosition = new Vector2(speakerVisiblePosition.x, speakerVisiblePosition.y - hiddenOffset);
+            speakerRectTransform.anchoredPosition = speakerHiddenPosition;
+        }
+
         // Clear any existing text immediately
         if (dialogueText != null)
         {
@@ -227,6 +279,27 @@ public class DialogueBox : MonoBehaviour
             hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y - hiddenOffset);
             rectTransform.anchoredPosition = hiddenPosition;
             rectTransform.localScale = new Vector3(designScale.x * scaleMultiplier, designScale.y * scaleMultiplier, designScale.z);
+        }
+
+        // Configure and set speaker box positions relative to dialogue box
+        if (speakerRectTransform != null)
+        {
+            if (useForcedSpeakerRect)
+            {
+                // force fixed rectangle and prevent stretching; square size
+                speakerRectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                speakerRectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                speakerRectTransform.pivot = new Vector2(0.5f, 0.5f);
+                speakerRectTransform.localScale = Vector3.one;
+                speakerRectTransform.sizeDelta = new Vector2(speakerForcedSize, speakerForcedSize);
+                speakerVisiblePosition = new Vector2(speakerForcedPosX, speakerForcedPosY);
+            }
+            else
+            {
+                speakerVisiblePosition = new Vector2(visiblePosition.x, visiblePosition.y + speakerOffsetY);
+            }
+            speakerHiddenPosition = new Vector2(speakerVisiblePosition.x, speakerVisiblePosition.y - hiddenOffset);
+            speakerRectTransform.anchoredPosition = speakerHiddenPosition;
         }
 
         slideAnimationCoroutine = StartCoroutine(SlideUp());
@@ -366,10 +439,33 @@ public class DialogueBox : MonoBehaviour
             t = 1f - Mathf.Pow(1f - t, 3f);
             
             rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+
+            // Animate speaker box if present
+            if (speakerRectTransform != null)
+            {
+                if (useForcedSpeakerRect)
+                {
+                    // enforce square size every frame to counter layout changes
+                    speakerRectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                    speakerRectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                    speakerRectTransform.pivot = new Vector2(0.5f, 0.5f);
+                    speakerRectTransform.localScale = Vector3.one;
+                    speakerRectTransform.sizeDelta = new Vector2(speakerForcedSize, speakerForcedSize);
+                }
+
+                Vector2 speakerStartPos = speakerHiddenPosition;
+                Vector2 speakerEndPos = speakerVisiblePosition;
+                speakerRectTransform.anchoredPosition = Vector2.Lerp(speakerStartPos, speakerEndPos, t);
+            }
+
             yield return null;
         }
 
         rectTransform.anchoredPosition = endPos;
+        if (speakerRectTransform != null)
+        {
+            speakerRectTransform.anchoredPosition = speakerVisiblePosition;
+        }
         isAnimating = false;
         
         // Start displaying text after slide-up completes
@@ -380,30 +476,65 @@ public class DialogueBox : MonoBehaviour
     {
         if (rectTransform == null)
         {
+            // ensure speaker box is also hidden
+            if (speakerRectTransform != null)
+            {
+                speakerRectTransform.anchoredPosition = speakerHiddenPosition;
+            }
             gameObject.SetActive(false);
+            if (speakerBox != null)
+            {
+                speakerBox.SetActive(false);
+            }
             yield break;
+        }
+
+        // recompute hidden positions based on current location so we always move completely off screen
+        Vector2 startPos = rectTransform.anchoredPosition;
+        hiddenPosition = new Vector2(startPos.x, startPos.y - hiddenOffset);
+        Vector2 endPos = hiddenPosition;
+        if (speakerRectTransform != null)
+        {
+            speakerHiddenPosition = new Vector2(speakerRectTransform.anchoredPosition.x, speakerRectTransform.anchoredPosition.y - hiddenOffset);
         }
 
         isAnimating = true;
         float elapsed = 0f;
-        Vector2 startPos = rectTransform.anchoredPosition;
-        Vector2 endPos = hiddenPosition;
 
         while (elapsed < slideDownDuration)
         {
             elapsed += Time.deltaTime;
             float t = elapsed / slideDownDuration;
             
-            // Ease-in curve for smooth acceleration
-            t = t * t;
+            // Ease-out curve for smooth deceleration (same as slide up for consistency)
+            t = 1f - Mathf.Pow(1f - t, 3f);
             
             rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
+
+            // Animate speaker box if present
+            if (speakerRectTransform != null)
+            {
+                Vector2 speakerStartPos = speakerRectTransform.anchoredPosition;
+                Vector2 speakerEndPos = speakerHiddenPosition;
+                speakerRectTransform.anchoredPosition = Vector2.Lerp(speakerStartPos, speakerEndPos, t);
+            }
+
             yield return null;
         }
 
         rectTransform.anchoredPosition = endPos;
+        if (speakerRectTransform != null)
+        {
+            speakerRectTransform.anchoredPosition = speakerHiddenPosition;
+        }
+        // ensure the boxes are well offscreen before turning them off
         isAnimating = false;
+        yield return new WaitForSeconds(closeDelay); // pause so user sees them below screen
         gameObject.SetActive(false);
+        if (speakerBox != null)
+        {
+            speakerBox.SetActive(false);
+        }
     }
 
     /// <summary>
