@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
@@ -7,8 +8,8 @@ using UnityEngine.InputSystem;
 public class DialogueBox : MonoBehaviour
 {
     [Header("Text Components")]
-    [Tooltip("The UI Text component that displays the dialogue. If null, will try to find one in children.")]
-    public Text dialogueText;
+    [Tooltip("The TextMeshProUGUI component that displays the dialogue. If null, will try to find one in children.")]
+    public TextMeshProUGUI dialogueText;
     
     [Tooltip("Optional: Image/GameObject that shows when there's more text to read (blinking arrow, etc.)")]
     public GameObject continueIndicator;
@@ -40,6 +41,26 @@ public class DialogueBox : MonoBehaviour
     [Tooltip("How far below the screen the dialogue box starts (in pixels or units).")]
     public float hiddenOffset = 200f;
 
+    [Header("Forced Rect Transform (applied when dialogue shows)")]
+    [Tooltip("When enabled, the dialogue box is forced to these values each time it opens.")]
+    public bool useForcedRectTransform = true;
+    public float forcedPosX = -3.2884f;
+    public float forcedPosY = -443.7852f;
+    public float forcedWidth = 1363.656f;
+    public float forcedHeight = 285.1071f;
+
+    [Header("Layout (used only when Forced Rect Transform is off)")]
+    [Tooltip("Nudge the visible position up (positive) or down (negative).")]
+    public float visiblePositionYOffset = 100f;
+    
+    [Tooltip("Scale of the dialogue box. Lower = smaller.")]
+    [Range(0.5f, 1.5f)]
+    public float scaleMultiplier = 0.85f;
+
+    [Header("Dialogue Lines")]
+    [Tooltip("List of dialogue lines to display. Use StartDialogue() to begin showing them.")]
+    public List<string> dialogueLines = new List<string>();
+
     private List<string> dialogueQueue = new List<string>();
     private int currentDialogueIndex = 0;
     private bool isDisplayingText = false;
@@ -51,6 +72,7 @@ public class DialogueBox : MonoBehaviour
     private RectTransform rectTransform;
     private Vector2 visiblePosition;
     private Vector2 hiddenPosition;
+    private Vector3 designScale;
     private bool isAnimating = false;
 
     private void Awake()
@@ -63,16 +85,20 @@ public class DialogueBox : MonoBehaviour
             return;
         }
 
-        // Store the visible position (current position)
+        // Store the visible position and scale from the editor layout
         visiblePosition = rectTransform.anchoredPosition;
-        
-        // Calculate hidden position (below screen)
+        designScale = rectTransform.localScale;
         hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y - hiddenOffset);
 
         // Auto-find dialogue text if not assigned
         if (dialogueText == null)
         {
-            dialogueText = GetComponentInChildren<Text>();
+            dialogueText = GetComponentInChildren<TextMeshProUGUI>();
+        }
+        if (dialogueText != null)
+        {
+            dialogueText.overflowMode = TextOverflowModes.Overflow;
+            dialogueText.enableWordWrapping = true;
         }
 
         // Set up input
@@ -130,21 +156,26 @@ public class DialogueBox : MonoBehaviour
 
         dialogueQueue = new List<string>(messages);
         currentDialogueIndex = 0;
-        
-        // Start hidden, then slide up
-        if (rectTransform != null)
+
+        // Activate this object, all parents, and all children so the whole UI (including text) is visible
+        Transform t = transform;
+        while (t != null)
         {
-            rectTransform.anchoredPosition = hiddenPosition;
+            if (!t.gameObject.activeSelf)
+                t.gameObject.SetActive(true);
+            t = t.parent;
         }
-        
-        gameObject.SetActive(true);
-        
-        // Slide up animation
+        SetActiveRecursive(transform, true);
+
+        // Clear any existing text immediately
+        if (dialogueText != null)
+        {
+            dialogueText.text = "";
+        }
+
         if (slideAnimationCoroutine != null)
-        {
             StopCoroutine(slideAnimationCoroutine);
-        }
-        slideAnimationCoroutine = StartCoroutine(SlideUp());
+        slideAnimationCoroutine = StartCoroutine(ShowDialogueAndSlideUp());
     }
 
     /// <summary>
@@ -161,6 +192,44 @@ public class DialogueBox : MonoBehaviour
     public void ShowDialogue(string[] messages)
     {
         ShowDialogue(new List<string>(messages));
+    }
+
+    /// <summary>
+    /// Start displaying dialogue from the dialogueLines list.
+    /// </summary>
+    public void StartDialogue()
+    {
+        ShowDialogue(dialogueLines);
+    }
+
+    private IEnumerator ShowDialogueAndSlideUp()
+    {
+        yield return null;
+        if (rectTransform == null) yield break;
+
+        if (useForcedRectTransform)
+        {
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.sizeDelta = new Vector2(forcedWidth, forcedHeight);
+            rectTransform.localScale = Vector3.one;
+            visiblePosition = new Vector2(forcedPosX, forcedPosY);
+            hiddenPosition = new Vector2(forcedPosX, forcedPosY - hiddenOffset);
+            rectTransform.anchoredPosition = hiddenPosition;
+        }
+        else
+        {
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+            visiblePosition = rectTransform.anchoredPosition;
+            visiblePosition.y += visiblePositionYOffset;
+            hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y - hiddenOffset);
+            rectTransform.anchoredPosition = hiddenPosition;
+            rectTransform.localScale = new Vector3(designScale.x * scaleMultiplier, designScale.y * scaleMultiplier, designScale.z);
+        }
+
+        slideAnimationCoroutine = StartCoroutine(SlideUp());
     }
 
     private void StartDisplayingText()
@@ -224,6 +293,12 @@ public class DialogueBox : MonoBehaviour
             yield return new WaitForSeconds(indicatorDelay);
             if (canAdvance) // Make sure we're still on this dialogue
             {
+                // Set continueIndicator text if it has TMP
+                TextMeshProUGUI nextText = continueIndicator.GetComponent<TextMeshProUGUI>();
+                if (nextText != null)
+                {
+                    nextText.text = "Press E to continue";
+                }
                 continueIndicator.SetActive(true);
                 StartCoroutine(BlinkIndicator());
             }
@@ -256,6 +331,12 @@ public class DialogueBox : MonoBehaviour
             
             if (continueIndicator != null)
             {
+                // Set continueIndicator text if it has TMP
+                TextMeshProUGUI nextText = continueIndicator.GetComponent<TextMeshProUGUI>();
+                if (nextText != null)
+                {
+                    nextText.text = "Press E to continue";
+                }
                 continueIndicator.SetActive(true);
                 StartCoroutine(BlinkIndicator());
             }
@@ -366,5 +447,12 @@ public class DialogueBox : MonoBehaviour
     public bool IsDialogueActive()
     {
         return gameObject.activeSelf && dialogueQueue.Count > 0;
+    }
+
+    private static void SetActiveRecursive(Transform root, bool active)
+    {
+        root.gameObject.SetActive(active);
+        for (int i = 0; i < root.childCount; i++)
+            SetActiveRecursive(root.GetChild(i), active);
     }
 }
