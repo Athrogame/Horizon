@@ -1677,6 +1677,7 @@ MonoBehaviour:
   scaleMultiplier: 1
   dialogueLines:
   - 'Horizon: Coming!'
+  - MAMA!
   showSpeakerBox: 1
   speakerBox: {fileID: 1929111927}
   speakerOffsetY: 50
@@ -1684,6 +1685,10 @@ MonoBehaviour:
   speakerForcedPosX: 500
   speakerForcedPosY: 325
   speakerForcedSize: 350
+  speakerPortraitImage: {fileID: 1003393850}
+  speakerEmotionSprites:
+  - {fileID: -8070189218959130933, guid: 7e0a175c4a07e4ee7b0f8c6ac346e611, type: 3}
+  - {fileID: -7050993540882883828, guid: 2e8468939289f442c9377fcd0fb00097, type: 3}
 --- !u!114 &1647079239
 MonoBehaviour:
   m_ObjectHideFlags: 0

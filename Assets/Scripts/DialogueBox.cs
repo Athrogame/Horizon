@@ -81,6 +81,12 @@ public class DialogueBox : MonoBehaviour
     [Tooltip("Width and height (same value) the speaker box will be forced to.")]
     public float speakerForcedSize = 100f;
 
+    [Tooltip("Image under the speaker box that shows the speaker's emotion. Assign the Image component on the child GameObject.")]
+    public Image speakerPortraitImage;
+
+    [Tooltip("One sprite per dialogue line. Line 0 uses element 0, line 1 uses element 1, etc. Add/remove and drag sprites to match dialogue lines.")]
+    public List<Sprite> speakerEmotionSprites = new List<Sprite>();
+
     private List<string> dialogueQueue = new List<string>();
     private int currentDialogueIndex = 0;
     private bool isDisplayingText = false;
@@ -123,6 +129,19 @@ public class DialogueBox : MonoBehaviour
             {
                 speakerVisiblePosition = speakerRectTransform.anchoredPosition;
                 speakerHiddenPosition = new Vector2(speakerVisiblePosition.x, speakerVisiblePosition.y - hiddenOffset);
+            }
+            if (speakerPortraitImage == null)
+            {
+                // Use the Image on a child (portrait), not the speaker box's own Image (the square)
+                Image[] images = speakerBox.GetComponentsInChildren<Image>(true);
+                foreach (Image img in images)
+                {
+                    if (img.transform != speakerBox.transform)
+                    {
+                        speakerPortraitImage = img;
+                        break;
+                    }
+                }
             }
             speakerBox.SetActive(false);
         }
@@ -335,6 +354,14 @@ public class DialogueBox : MonoBehaviour
             speakerRectTransform.anchoredPosition = speakerHiddenPosition;
         }
 
+        // Set first line's emotion image before slide-up so it's visible during the animation
+        if (showSpeakerBox && speakerPortraitImage != null && speakerEmotionSprites.Count > 0)
+        {
+            Sprite first = speakerEmotionSprites[0];
+            speakerPortraitImage.sprite = first;
+            speakerPortraitImage.enabled = (first != null);
+        }
+
         slideAnimationCoroutine = StartCoroutine(SlideUp());
     }
 
@@ -345,6 +372,14 @@ public class DialogueBox : MonoBehaviour
             // All dialogue finished
             CloseDialogue();
             return;
+        }
+
+        // Set speaker emotion sprite for this line (parallel list: line index = sprite index)
+        if (showSpeakerBox && speakerPortraitImage != null && currentDialogueIndex < speakerEmotionSprites.Count)
+        {
+            Sprite s = speakerEmotionSprites[currentDialogueIndex];
+            speakerPortraitImage.sprite = s;
+            speakerPortraitImage.enabled = (s != null);
         }
 
         string currentText = dialogueQueue[currentDialogueIndex];
@@ -432,6 +467,13 @@ public class DialogueBox : MonoBehaviour
                 StopCoroutine(typewriterCoroutine);
             }
             dialogueText.text = dialogueQueue[currentDialogueIndex];
+            // Keep speaker emotion in sync for this line
+            if (showSpeakerBox && speakerPortraitImage != null && currentDialogueIndex < speakerEmotionSprites.Count)
+            {
+                Sprite s = speakerEmotionSprites[currentDialogueIndex];
+                speakerPortraitImage.sprite = s;
+                speakerPortraitImage.enabled = (s != null);
+            }
             isDisplayingText = false;
             canAdvance = true;
             
