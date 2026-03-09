@@ -1012,7 +1012,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1003393849
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1170,7 +1170,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 8.4375
+  orthographic size: 7.875
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -1676,8 +1676,8 @@ MonoBehaviour:
   visiblePositionYOffset: 0
   scaleMultiplier: 1
   dialogueLines:
-  - 'Horizon: Coming!'
-  - MAMA!
+  - 'Mom: Get ur lazy ass down right now!!!'
+  - 'Hori: Coming Coming!!!'
   showSpeakerBox: 1
   speakerBox: {fileID: 1929111927}
   speakerOffsetY: 50
@@ -1687,7 +1687,7 @@ MonoBehaviour:
   speakerForcedSize: 350
   speakerPortraitImage: {fileID: 1003393850}
   speakerEmotionSprites:
-  - {fileID: -8070189218959130933, guid: 7e0a175c4a07e4ee7b0f8c6ac346e611, type: 3}
+  - {fileID: 3771676678745289610, guid: b2ed8b2d65e084a57a87344a1ab6e528, type: 3}
   - {fileID: -7050993540882883828, guid: 2e8468939289f442c9377fcd0fb00097, type: 3}
 --- !u!114 &1647079239
 MonoBehaviour:
