@@ -1170,7 +1170,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 7.875
+  orthographic size: 8.4375
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -1687,7 +1687,7 @@ MonoBehaviour:
   speakerForcedSize: 350
   speakerPortraitImage: {fileID: 1003393850}
   speakerEmotionSprites:
-  - {fileID: 3771676678745289610, guid: b2ed8b2d65e084a57a87344a1ab6e528, type: 3}
+  - {fileID: 21300000, guid: 8f827fc1cd5fd524f93e3955c31eccbd, type: 3}
   - {fileID: -7050993540882883828, guid: 2e8468939289f442c9377fcd0fb00097, type: 3}
 --- !u!114 &1647079239
 MonoBehaviour:
