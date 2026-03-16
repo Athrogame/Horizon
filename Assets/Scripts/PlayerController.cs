@@ -67,6 +67,63 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Force the player to face a specific direction (used when spawning from doors).
+    /// Direction will be snapped to the nearest 4-way cardinal and applied to the animator.
+    /// If pulseMove is true, IsMoving will briefly be set to true to play a step, then turned off.
+    /// </summary>
+    public void SetFacingDirection(Vector2 direction, bool pulseMove = false, float pulseDuration = 0.1f)
+    {
+        if (direction == Vector2.zero)
+            return;
+
+        // Snap to 4-way cardinal
+        Vector2 cardinal;
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            cardinal = new Vector2(Mathf.Sign(direction.x), 0f);
+        }
+        else
+        {
+            cardinal = new Vector2(0f, Mathf.Sign(direction.y));
+        }
+
+        lastMoveX = cardinal.x;
+        lastMoveY = cardinal.y;
+
+        // Stop movement and update animator to idle in that direction
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+
+        if (animator != null)
+        {
+            if (pulseMove)
+            {
+                // Briefly mark as moving to ensure the walk animation direction updates
+                animator.SetBool(IsMoving, true);
+                StartCoroutine(PulseIsMoving(pulseDuration));
+            }
+            else
+            {
+                animator.SetBool(IsMoving, false);
+            }
+
+            animator.SetFloat(MoveX, lastMoveX);
+            animator.SetFloat(MoveY, lastMoveY);
+        }
+    }
+
+    private System.Collections.IEnumerator PulseIsMoving(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        if (animator != null)
+        {
+            animator.SetBool(IsMoving, false);
+        }
+    }
+
     private void OnEnable()
     {
         if (moveAction != null)
