@@ -57,14 +57,18 @@ public class SceneMgr : MonoBehaviour
         {
             int index = Mathf.Clamp(doorToSpawnAt, 0, spawnPoints.SpawnLocations.Count - 1);
 
-            // Move player to the chosen door spawn
+            // Move player exactly to the chosen door spawn (no extra offset)
             PlayerController.I.transform.position = spawnPoints.SpawnLocations[index].position;
 
             // If a facing direction is configured for this spawn index, apply it to the player's animator
             if (spawnPoints.SpawnDirections != null && spawnPoints.SpawnDirections.Count > index)
             {
-                // pulseMove = true so IsMoving is briefly true, then turned off
-                PlayerController.I.SetFacingDirection(spawnPoints.SpawnDirections[index], true, 0.1f);
+                Vector2 facingDir = spawnPoints.SpawnDirections[index];
+                if (facingDir != Vector2.zero)
+                {
+                    // pulseMove = true so IsMoving is briefly true, then turned off
+                    PlayerController.I.SetFacingDirection(facingDir, true, 0.1f);
+                }
             }
         }
     }
