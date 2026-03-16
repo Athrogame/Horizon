@@ -5,6 +5,10 @@ using UnityEngine.InputSystem; // New Input System
 [RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
+    public static PlayerController I { get; private set; }
+
+
+
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float acceleration = 20f;
@@ -28,6 +32,16 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
+        if (I == null)
+        {
+            I = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
 
