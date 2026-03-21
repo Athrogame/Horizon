@@ -30,6 +30,16 @@ public class SceneMgr : MonoBehaviour
         }
     }
 
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
     public void LoadScene(int sceneIndex)
     {
         if (transitionAnim != null)
@@ -52,20 +62,27 @@ public class SceneMgr : MonoBehaviour
     private void DoLoadScene(int sceneIndex)
     {
         SceneManager.LoadScene(sceneIndex);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
         var spawnPoints = FindFirstObjectByType<DoorSpawnPoints>();
         if (spawnPoints != null && PlayerController.I != null && spawnPoints.SpawnLocations.Count > 0)
         {
+            
             int index = Mathf.Clamp(doorToSpawnAt, 0, spawnPoints.SpawnLocations.Count - 1);
 
             // Move player exactly to the chosen door spawn (no extra offset)
             PlayerController.I.transform.position = spawnPoints.SpawnLocations[index].position;
-
+            
             // If a facing direction is configured for this spawn index, apply it to the player's animator
             if (spawnPoints.SpawnDirections != null && spawnPoints.SpawnDirections.Count > index)
             {
                 Vector2 facingDir = spawnPoints.SpawnDirections[index];
+                Debug.Log("First if statment" + facingDir);
                 if (facingDir != Vector2.zero)
                 {
+                    Debug.Log("Second if statment" + facingDir);
                     // pulseMove = true so IsMoving is briefly true, then turned off
                     PlayerController.I.SetFacingDirection(facingDir, true, 0.1f);
                 }

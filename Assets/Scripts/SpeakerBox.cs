@@ -1,9 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+// Do not `using MG.GIF` — it conflicts with UnityEngine.UI.Image.
 
-public class SpeakerBox : MonoBehaviour
+public class SpeakerBox : MonoBehaviour, ISpeakerBox
 {
     [Header("Required References")]
     public RectTransform speakerRect;
@@ -11,10 +16,10 @@ public class SpeakerBox : MonoBehaviour
     // The script will read its Image component to swap emotion sprites.
     public GameObject portraitObject;
     // Optional: if set, this RectTransform will be kept in sync
-    // with the speakerRect so the \"box\" and \"image\" always share
+    // with the speakerRect so the "box" and "image" always share
     // the same rect (position + size) at runtime.
     public RectTransform speakerImageRect;
-    public List<Sprite> emotionSprites = new List<Sprite>();
+    public List<GifEmotionAnimation> emotionAnimations = new List<GifEmotionAnimation>();
 
     [Header("Normal (unfocused) state")]
     public bool useNormalForcedRect = true;
@@ -47,6 +52,20 @@ public class SpeakerBox : MonoBehaviour
 
     private Color bgOriginalColor;
 
+    // GIF frame playback
+    private Coroutine emotionAnimationCoroutine;
+    private GifEmotionAnimation currentEmotionAnimation;
+    private Image portraitImageComponent;
+
+    private class RuntimeGifData
+    {
+        public List<Sprite> frames;
+        public List<float> delays;
+        public bool loop;
+    }
+
+    private readonly Dictionary<GifEmotionAnimation, RuntimeGifData> runtimeGifCache = new Dictionary<GifEmotionAnimation, RuntimeGifData>();
+
     private void Awake()
     {
         if (speakerRect == null)
@@ -64,6 +83,9 @@ public class SpeakerBox : MonoBehaviour
             var img = portraitObject.GetComponent<Image>();
             if (img != null) speakerImageRect = img.rectTransform;
         }
+
+        if (portraitObject != null)
+            portraitImageComponent = portraitObject.GetComponent<Image>();
 
         // Make the image rect fill the speaker box so X/Y both follow reliably.
         // We assume speakerImageRect is a child of speakerRect; anchors 0..1 and
@@ -145,6 +167,8 @@ public class SpeakerBox : MonoBehaviour
         if (!isVisible || speakerRect == null)
             return;
 
+        StopEmotionAnimation();
+
         isVisible = false;
         isFocused = false;
 
@@ -186,7 +210,7 @@ public class SpeakerBox : MonoBehaviour
 
         isFocused = true;
 
-        // Cache current rect as \"normal\" to restore later
+        // Cache current rect as "normal" to restore later
         cachedNormalPos = speakerRect.anchoredPosition;
         cachedNormalSize = speakerRect.sizeDelta;
 
@@ -230,21 +254,174 @@ public class SpeakerBox : MonoBehaviour
 
     public void SetEmotionForLine(int index)
     {
-        if (emotionSprites == null || emotionSprites.Count == 0)
+        if (portraitObject == null)
             return;
 
-        // Get the Image from the dragged-in portrait GameObject.
-        Image targetImage = portraitObject != null ? portraitObject.GetComponent<Image>() : null;
-
-        if (targetImage == null)
+        if (emotionAnimations == null || emotionAnimations.Count == 0)
             return;
 
-        if (index >= 0 && index < emotionSprites.Count)
+        if (index < 0 || index >= emotionAnimations.Count)
+            return;
+
+        var anim = emotionAnimations[index];
+        if (anim == null || anim.gifSource == null)
         {
-            var s = emotionSprites[index];
-            targetImage.sprite = s;
-            targetImage.enabled = (s != null);
+            StopEmotionAnimation();
+            if (portraitImageComponent != null)
+            {
+                portraitImageComponent.sprite = null;
+                portraitImageComponent.enabled = false;
+            }
+            return;
         }
+
+        var runtime = GetRuntimeGifData(anim);
+        if (runtime == null || runtime.frames == null || runtime.frames.Count == 0)
+        {
+            StopEmotionAnimation();
+            if (portraitImageComponent != null)
+            {
+                portraitImageComponent.sprite = null;
+                portraitImageComponent.enabled = false;
+            }
+            return;
+        }
+
+        StopEmotionAnimation();
+        currentEmotionAnimation = anim;
+        emotionAnimationCoroutine = StartCoroutine(PlayEmotionFrames(runtime));
+    }
+
+    private const float RuntimeGifPlaybackFpsCap = 0.9f;
+    private const int RuntimeGifMaxFrames = 120;
+
+    private RuntimeGifData GetRuntimeGifData(GifEmotionAnimation anim)
+    {
+        if (anim == null)
+            return null;
+
+        if (runtimeGifCache.TryGetValue(anim, out var cached))
+            return cached;
+
+        // If it's already baked, use it directly.
+        if (anim.IsReady)
+        {
+            var data = new RuntimeGifData
+            {
+                frames = anim.frames,
+                delays = anim.frameDelays,
+                loop = anim.loop
+            };
+            runtimeGifCache[anim] = data;
+            return data;
+        }
+
+        // Runtime decode fallback (no manual baking).
+        // In builds this requires a different byte-source; for now we support editor playback.
+#if UNITY_EDITOR
+        string path = AssetDatabase.GetAssetPath(anim.gifSource);
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        byte[] bytes = File.ReadAllBytes(path);
+#else
+        Debug.LogError("SpeakerBox: Runtime GIF decode is only implemented in the editor. Bake GIFs or extend runtime byte loading.");
+        return null;
+#endif
+
+        var frames = new List<Sprite>();
+        var delays = new List<float>();
+
+        float minDelaySeconds = 1f / Mathf.Max(0.0001f, RuntimeGifPlaybackFpsCap);
+
+        using (var decoder = new MG.GIF.Decoder(bytes))
+        {
+            var img = decoder.NextImage();
+            int frameIndex = 0;
+
+            while (img != null && frameIndex < RuntimeGifMaxFrames)
+            {
+                Texture2D tex = img.CreateTexture();
+                if (tex == null)
+                    break;
+
+                tex.filterMode = FilterMode.Point;
+                tex.wrapMode = TextureWrapMode.Clamp;
+
+                tex.name = $"{anim.name}_rt_frame_{frameIndex:000}";
+
+                var sprite = Sprite.Create(
+                    tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f),
+                    100f
+                );
+                sprite.name = $"{anim.name}_rt_sprite_{frameIndex:000}";
+
+                float delaySeconds = Mathf.Max(minDelaySeconds, img.Delay / 1000f);
+
+                frames.Add(sprite);
+                delays.Add(delaySeconds);
+
+                frameIndex++;
+                img = decoder.NextImage();
+            }
+        }
+
+        if (frames.Count == 0)
+            return null;
+
+        var runtimeData = new RuntimeGifData
+        {
+            frames = frames,
+            delays = delays,
+            loop = anim.loop
+        };
+
+        runtimeGifCache[anim] = runtimeData;
+        return runtimeData;
+    }
+
+    private IEnumerator PlayEmotionFrames(RuntimeGifData runtime)
+    {
+        if (runtime == null || runtime.frames == null || runtime.frames.Count == 0)
+            yield break;
+
+        if (portraitImageComponent == null && portraitObject != null)
+            portraitImageComponent = portraitObject.GetComponent<Image>();
+
+        if (portraitImageComponent == null)
+            yield break;
+
+        int frameCount = runtime.frames.Count;
+
+        do
+        {
+            for (int i = 0; i < frameCount; i++)
+            {
+                if (!isVisible || currentEmotionAnimation == null)
+                    yield break;
+
+                var frameSprite = runtime.frames[i];
+                portraitImageComponent.sprite = frameSprite;
+                portraitImageComponent.enabled = (frameSprite != null);
+
+                float delay = (runtime.delays != null && i >= 0 && i < runtime.delays.Count) ? runtime.delays[i] : (1f / Mathf.Max(0.0001f, RuntimeGifPlaybackFpsCap));
+                yield return new WaitForSecondsRealtime(delay);
+            }
+        }
+        while (runtime.loop && isVisible && currentEmotionAnimation != null);
+    }
+
+    private void StopEmotionAnimation()
+    {
+        if (emotionAnimationCoroutine != null)
+        {
+            StopCoroutine(emotionAnimationCoroutine);
+            emotionAnimationCoroutine = null;
+        }
+
+        currentEmotionAnimation = null;
     }
 
     // --- helpers -----------------------------------------------------------

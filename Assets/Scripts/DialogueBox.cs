@@ -42,7 +42,8 @@ public class DialogueBox : MonoBehaviour
     public List<string> dialogueLines = new List<string>();
 
     [Header("Speaker Controller (new script)")]
-    public SpeakerBox speakerBoxController; // assign your SpeakerBox component here
+    [Tooltip("Drag the GameObject that has SpeakerBox on it here.")]
+    public MonoBehaviour speakerBoxController; // SpeakerBox component (runtime-called)
 
     private List<string> dialogueQueue = new List<string>();
     private int currentDialogueIndex = 0;
@@ -79,7 +80,7 @@ public class DialogueBox : MonoBehaviour
         if (dialogueText != null)
         {
             dialogueText.overflowMode = TextOverflowModes.Overflow;
-            dialogueText.enableWordWrapping = true;
+            dialogueText.textWrappingMode = TextWrappingModes.Normal;
         }
 
         if (advanceAction != null)
@@ -149,8 +150,7 @@ public class DialogueBox : MonoBehaviour
         slideAnimationCoroutine = StartCoroutine(ShowDialogueAndSlideUp());
 
         // Let speaker controller know dialogue started
-        if (speakerBoxController != null)
-            speakerBoxController.ShowNormal();
+        SpeakerShowNormal();
     }
 
     public void ShowDialogue(string message)
@@ -182,8 +182,7 @@ public class DialogueBox : MonoBehaviour
             continueIndicator.SetActive(false);
 
         // Tell speaker to slide out
-        if (speakerBoxController != null)
-            speakerBoxController.Hide();
+        SpeakerHide();
 
         if (rectTransform != null && gameObject.activeSelf)
         {
@@ -200,6 +199,32 @@ public class DialogueBox : MonoBehaviour
     public bool IsDialogueActive()
     {
         return gameObject.activeSelf && dialogueQueue.Count > 0;
+    }
+
+    // SpeakerBox is driven via reflection to avoid compile-time coupling.
+    private void SpeakerShowNormal()
+    {
+        if (speakerBoxController == null)
+            return;
+        var m = speakerBoxController.GetType().GetMethod("ShowNormal");
+        m?.Invoke(speakerBoxController, null);
+    }
+
+    private void SpeakerHide()
+    {
+        if (speakerBoxController == null)
+            return;
+        var m = speakerBoxController.GetType().GetMethod("Hide");
+        m?.Invoke(speakerBoxController, null);
+    }
+
+    private void SpeakerSetEmotionForLine(int index)
+    {
+        if (speakerBoxController == null)
+            return;
+        var m = speakerBoxController.GetType().GetMethod("SetEmotionForLine");
+        if (m != null)
+            m.Invoke(speakerBoxController, new object[] { index });
     }
 
     // --- Internals ---------------------------------------------------------
@@ -248,8 +273,7 @@ public class DialogueBox : MonoBehaviour
 
         string currentText = dialogueQueue[currentDialogueIndex];
 
-        if (speakerBoxController != null)
-            speakerBoxController.SetEmotionForLine(currentDialogueIndex);
+        SpeakerSetEmotionForLine(currentDialogueIndex);
 
         if (typewriterCoroutine != null)
             StopCoroutine(typewriterCoroutine);

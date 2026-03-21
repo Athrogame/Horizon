@@ -167,32 +167,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Update animations: keep same MoveX/MoveY when you stop so idle matches last walk direction
-        if (animator != null)
-        {
-            bool isMoving = cardinal != Vector2.zero;
-
-            if (isMoving)
-            {
-                // While moving: set direction and remember it for when we stop
-                if (cardinal.x != 0f)
-                {
-                    lastMoveX = cardinal.x;
-                    lastMoveY = 0f;
-                }
-                else
-                {
-                    lastMoveX = 0f;
-                    lastMoveY = cardinal.y;
-                }
-            }
-            // When idle we keep lastMoveX and lastMoveY unchanged
-
-            animator.SetBool(IsMoving, isMoving);
-            animator.SetFloat(MoveX, lastMoveX);
-            animator.SetFloat(MoveY, lastMoveY);
-        }
-
         // Target velocity based on cardinal direction
         Vector2 targetVelocity = cardinal * moveSpeed;
 
@@ -205,5 +179,37 @@ public class PlayerController : MonoBehaviour
         );
 
         rb.linearVelocity = newVelocity;
+
+        // Drive animations from the velocity physics *actually produced* last frame
+        // (currentVelocity = rb.linearVelocity before we modify it this frame).
+        // Because collision resolution runs after FixedUpdate, a wall will have
+        // zeroed out the velocity by the time the next frame reads it here — so
+        // IsMoving stays false when the player is blocked.
+        if (animator != null)
+        {
+            // Use a small speed threshold so micro-jitter doesn't trigger IsMoving
+            bool isMoving = currentVelocity.sqrMagnitude > 0.01f;
+
+            if (isMoving)
+            {
+                // Dominant axis of actual velocity decides facing direction
+                if (Mathf.Abs(currentVelocity.x) >= Mathf.Abs(currentVelocity.y))
+                {
+                    lastMoveX = Mathf.Sign(currentVelocity.x);
+                    lastMoveY = 0f;
+                }
+                else
+                {
+                    lastMoveX = 0f;
+                    lastMoveY = Mathf.Sign(currentVelocity.y);
+                }
+            }
+            // When idle, lastMoveX / lastMoveY stay as-is so the idle pose
+            // matches the direction the player was last moving.
+
+            animator.SetBool(IsMoving, isMoving);
+            animator.SetFloat(MoveX, lastMoveX);
+            animator.SetFloat(MoveY, lastMoveY);
+        }
     }
 }
