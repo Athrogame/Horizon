@@ -4,7 +4,10 @@ using UnityEngine.SceneManagement;
 
 public class SceneMgr : MonoBehaviour
 {
-    public int doorToSpawnAt; // The index of the door spawn point to use when the new scene loads
+    [Header("Spawn Selection")]
+    [Tooltip("Which DoorSpawnPoints index to use in the newly loaded scene.")]
+    public int doorToSpawnAt;
+
     public static SceneMgr I { get; private set; }
 
     [Header("Transition Animation")]
@@ -13,10 +16,13 @@ public class SceneMgr : MonoBehaviour
     [Tooltip("Time to wait for the fade-to-black before loading the scene (should match your 'end' clip length).")]
     public float fadeOutDuration = 0.25f;
 
-    // Panel.controller: trigger "end" = fade to black, state "New Animation" = fade from black
+    // Panel.controller convention:
+    // - trigger "end" => fade to black
+    // - state "New Animation" => fade from black
     private static readonly int EndTrigger = Animator.StringToHash("end");
+    private const float SpawnFacingPulseDuration = 0.1f;
 
-    void Awake()
+    private void Awake()
     {
         if (I == null)
         {
@@ -30,16 +36,20 @@ public class SceneMgr : MonoBehaviour
         }
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
+    /// <summary>
+    /// Entry point used by doors / gameplay scripts.
+    /// Plays transition when available, otherwise loads immediately.
+    /// </summary>
     public void LoadScene(int sceneIndex)
     {
         if (transitionAnim != null)
@@ -67,26 +77,53 @@ public class SceneMgr : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         var spawnPoints = FindFirstObjectByType<DoorSpawnPoints>();
-        if (spawnPoints != null && PlayerController.I != null && spawnPoints.SpawnLocations.Count > 0)
-        {
-            
-            int index = Mathf.Clamp(doorToSpawnAt, 0, spawnPoints.SpawnLocations.Count - 1);
+        if (spawnPoints == null || PlayerController.I == null || spawnPoints.SpawnLocations.Count == 0)
+            return;
 
-            // Move player exactly to the chosen door spawn (no extra offset)
-            PlayerController.I.transform.position = spawnPoints.SpawnLocations[index].position;
-            
-            // If a facing direction is configured for this spawn index, apply it to the player's animator
-            if (spawnPoints.SpawnDirections != null && spawnPoints.SpawnDirections.Count > index)
+        int index = Mathf.Clamp(doorToSpawnAt, 0, spawnPoints.SpawnLocations.Count - 1);
+
+        // Spawn exactly on the chosen point for seamless transitions.
+        PlayerController.I.transform.position = spawnPoints.SpawnLocations[index].position;
+
+        TryApplySpawnFacing(spawnPoints, index);
+    }
+
+    private void TryApplySpawnFacing(DoorSpawnPoints spawnPoints, int index)
+    {
+        if (spawnPoints.SpawnDirections == null)
+            return;
+
+        if (spawnPoints.SpawnDirections.Count <= index)
+        {
+            if (spawnPoints.SpawnDirections.Count != spawnPoints.SpawnLocations.Count)
             {
-                Vector2 facingDir = spawnPoints.SpawnDirections[index];
-                Debug.Log("First if statment" + facingDir);
-                if (facingDir != Vector2.zero)
-                {
-                    Debug.Log("Second if statment" + facingDir);
-                    // pulseMove = true so IsMoving is briefly true, then turned off
-                    PlayerController.I.SetFacingDirection(facingDir, true, 0.1f);
-                }
+                Debug.LogWarning(
+                    $"SceneMgr: SpawnDirections count ({spawnPoints.SpawnDirections.Count}) " +
+                    $"doesn't match SpawnLocations count ({spawnPoints.SpawnLocations.Count}). " +
+                    $"Door index used: {index}."
+                );
             }
+            return;
         }
+
+        Vector2 facingDir = spawnPoints.SpawnDirections[index];
+        if (facingDir == Vector2.zero)
+            return;
+
+        // Apply after one physics step so velocity-driven animator state
+        // isn't overwritten by spawn-time collision settling.
+        StartCoroutine(ApplySpawnFacingAfterFixedUpdate(facingDir));
+    }
+
+    private IEnumerator ApplySpawnFacingAfterFixedUpdate(Vector2 facingDir)
+    {
+        // Wait for a single physics step in the newly loaded scene.
+        yield return new WaitForFixedUpdate();
+
+        if (PlayerController.I == null)
+            yield break;
+
+        // pulseMove=true nudges velocity-based animations to the requested direction.
+        PlayerController.I.SetFacingDirection(facingDir, true, SpawnFacingPulseDuration);
     }
 }

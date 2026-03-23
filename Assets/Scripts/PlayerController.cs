@@ -7,8 +7,6 @@ public class PlayerController : MonoBehaviour
 {
     public static PlayerController I { get; private set; }
 
-
-
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float acceleration = 20f;
@@ -21,12 +19,17 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveInput;
     private InputAction moveAction;
 
-    // Animation parameter names (left = -1, right = 1; only horizontal for left/right idles)
+    [Header("Spawn Facing Pulse (for velocity-driven anims)")]
+    [Tooltip("When SetFacingDirection(..., pulseMove:true) is used, we give the player a tiny velocity in the facing direction so velocity-based animations update immediately.")]
+    public float spawnFacingPulseVelocity = 0.25f;
+
+    // Animator parameter hashes (avoids repeated string lookups)
     private static readonly int MoveX = Animator.StringToHash("MoveX");
     private static readonly int MoveY = Animator.StringToHash("MoveY");
     private static readonly int IsMoving = Animator.StringToHash("IsMoving");
+    private const float MoveDeadzone = 0.01f;
 
-    // Last direction sent to animator (so idle keeps the same pose as when you stopped)
+    // Last non-zero cardinal direction sent to animator (used for idle facing)
     private float lastMoveX = 0f;
     private float lastMoveY = -1f;
 
@@ -52,12 +55,12 @@ public class PlayerController : MonoBehaviour
         // Smooth position between physics steps so the camera (LateUpdate) doesn't see jitter/teleporting
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
-        // Get the Move action from the reference
+        // Resolve input action from inspector reference.
         if (moveActionReference != null)
         {
             moveAction = moveActionReference.action;
 
-            // Listen to Move input
+            // Cache latest stick/keyboard vector each time input changes.
             moveAction.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
             moveAction.canceled += ctx => moveInput = Vector2.zero;
         }
@@ -69,32 +72,32 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>
     /// Force the player to face a specific direction (used when spawning from doors).
-    /// Direction will be snapped to the nearest 4-way cardinal and applied to the animator.
-    /// If pulseMove is true, IsMoving will briefly be set to true to play a step, then turned off.
+    /// Direction is snapped to 4-way cardinal and animator parameters are updated.
+    /// pulseMove applies a tiny velocity to drive velocity-based animation state.
     /// </summary>
     public void SetFacingDirection(Vector2 direction, bool pulseMove = false, float pulseDuration = 0.1f)
     {
         if (direction == Vector2.zero)
             return;
 
-        // Snap to 4-way cardinal
-        Vector2 cardinal;
-        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
-        {
-            cardinal = new Vector2(Mathf.Sign(direction.x), 0f);
-        }
-        else
-        {
-            cardinal = new Vector2(0f, Mathf.Sign(direction.y));
-        }
+        Vector2 cardinal = ToCardinal(direction);
 
         lastMoveX = cardinal.x;
         lastMoveY = cardinal.y;
 
-        // Stop movement and update animator to idle in that direction
+        // Stop movement / apply a tiny facing impulse, then update animator to that idle pose.
         if (rb != null)
         {
-            rb.linearVelocity = Vector2.zero;
+            if (pulseMove)
+            {
+                // IMPORTANT: animator + IsMoving are driven by actual velocity in FixedUpdate.
+                // So we need a small velocity pulse so the next physics tick updates facing correctly.
+                rb.linearVelocity = cardinal * spawnFacingPulseVelocity;
+            }
+            else
+            {
+                rb.linearVelocity = Vector2.zero;
+            }
         }
 
         if (animator != null)
@@ -120,7 +123,12 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(duration);
         if (animator != null)
         {
-            animator.SetBool(IsMoving, false);
+            // Avoid fighting FixedUpdate's velocity-driven animator state.
+            // Only force IsMoving false if the rigidbody is basically stopped.
+            if (rb == null || rb.linearVelocity.sqrMagnitude < MoveDeadzone)
+            {
+                animator.SetBool(IsMoving, false);
+            }
         }
     }
 
@@ -142,30 +150,11 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Read raw input
         Vector2 input = moveInput;
-
-        // Deadzone so tiny inputs don't move the player
-        if (input.sqrMagnitude < 0.01f)
-        {
+        if (input.sqrMagnitude < MoveDeadzone)
             input = Vector2.zero;
-        }
 
-        // Lock to 4 directions (up, down, left, right)
-        Vector2 cardinal = Vector2.zero;
-        if (input != Vector2.zero)
-        {
-            if (Mathf.Abs(input.x) > Mathf.Abs(input.y))
-            {
-                // Horizontal movement
-                cardinal = new Vector2(Mathf.Sign(input.x), 0f);
-            }
-            else
-            {
-                // Vertical movement
-                cardinal = new Vector2(0f, Mathf.Sign(input.y));
-            }
-        }
+        Vector2 cardinal = input == Vector2.zero ? Vector2.zero : ToCardinal(input);
 
         // Target velocity based on cardinal direction
         Vector2 targetVelocity = cardinal * moveSpeed;
@@ -180,36 +169,34 @@ public class PlayerController : MonoBehaviour
 
         rb.linearVelocity = newVelocity;
 
-        // Drive animations from the velocity physics *actually produced* last frame
-        // (currentVelocity = rb.linearVelocity before we modify it this frame).
-        // Because collision resolution runs after FixedUpdate, a wall will have
-        // zeroed out the velocity by the time the next frame reads it here — so
-        // IsMoving stays false when the player is blocked.
+        // Drive animations from the velocity that physics produced on the previous step.
+        // This keeps animation honest when collisions block movement.
         if (animator != null)
         {
-            // Use a small speed threshold so micro-jitter doesn't trigger IsMoving
-            bool isMoving = currentVelocity.sqrMagnitude > 0.01f;
+            bool isMoving = currentVelocity.sqrMagnitude > MoveDeadzone;
 
             if (isMoving)
             {
-                // Dominant axis of actual velocity decides facing direction
-                if (Mathf.Abs(currentVelocity.x) >= Mathf.Abs(currentVelocity.y))
-                {
-                    lastMoveX = Mathf.Sign(currentVelocity.x);
-                    lastMoveY = 0f;
-                }
-                else
-                {
-                    lastMoveX = 0f;
-                    lastMoveY = Mathf.Sign(currentVelocity.y);
-                }
+                Vector2 facing = ToCardinal(currentVelocity);
+                lastMoveX = facing.x;
+                lastMoveY = facing.y;
             }
-            // When idle, lastMoveX / lastMoveY stay as-is so the idle pose
-            // matches the direction the player was last moving.
+            // When idle, keep previous direction for correct idle pose.
 
             animator.SetBool(IsMoving, isMoving);
             animator.SetFloat(MoveX, lastMoveX);
             animator.SetFloat(MoveY, lastMoveY);
         }
+    }
+
+    /// <summary>
+    /// Snap any vector to nearest four-way cardinal direction.
+    /// </summary>
+    private static Vector2 ToCardinal(Vector2 direction)
+    {
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            return new Vector2(Mathf.Sign(direction.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(direction.y));
     }
 }

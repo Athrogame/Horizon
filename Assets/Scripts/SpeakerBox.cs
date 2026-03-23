@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 #if UNITY_EDITOR
@@ -10,6 +11,9 @@ using UnityEditor;
 
 public class SpeakerBox : MonoBehaviour, ISpeakerBox
 {
+    // ---------------------------------------------------------------------
+    // Scene/UI references
+    // ---------------------------------------------------------------------
     [Header("Required References")]
     public RectTransform speakerRect;
     // Drag the child GameObject that holds the portrait Image here.
@@ -19,6 +23,23 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // with the speakerRect so the "box" and "image" always share
     // the same rect (position + size) at runtime.
     public RectTransform speakerImageRect;
+
+    [System.Serializable]
+    public class GifEmotionEntry
+    {
+        [Tooltip("Drag a .gif here. No GifEmotionAnimation asset or Bake step required in Play Mode (Editor).")]
+        public Object gifSource;
+
+        [Tooltip("If true, the GIF loops while the speaker is visible.")]
+        public bool loop = true;
+    }
+
+    [Header("Emotions (drag GIFs directly)")]
+    [Tooltip("Use this list to drag GIF files straight into the inspector. SpeakerBox will decode them at runtime (Play Mode in Editor).")]
+    public List<GifEmotionEntry> emotionGifEntries = new List<GifEmotionEntry>();
+
+    [Header("Emotions (legacy: GifEmotionAnimation assets)")]
+    [Tooltip("Optional. If emotionGifEntries is empty, SpeakerBox will fall back to this list (supports baked frames).")]
     public List<GifEmotionAnimation> emotionAnimations = new List<GifEmotionAnimation>();
 
     [Header("Normal (unfocused) state")]
@@ -54,18 +75,32 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
     // GIF frame playback
     private Coroutine emotionAnimationCoroutine;
-    private GifEmotionAnimation currentEmotionAnimation;
+    private object currentEmotionKey;
     private Image portraitImageComponent;
+
+    [Header("GIF Playback")]
+    [Tooltip("1 = normal speed. 2 = twice as fast. 0.5 = half speed.")]
+    public float gifPlaybackSpeed = 1f;
+
+    [Tooltip("Playback fps cap (used to avoid decoding too fast).")]
+    public float gifPlaybackFpsCap = 0.9f;
 
     private class RuntimeGifData
     {
+        // Decoded frames and matching delays in seconds.
         public List<Sprite> frames;
         public List<float> delays;
         public bool loop;
     }
 
     private readonly Dictionary<GifEmotionAnimation, RuntimeGifData> runtimeGifCache = new Dictionary<GifEmotionAnimation, RuntimeGifData>();
+    private readonly Dictionary<Object, RuntimeGifData> runtimeGifSourceCache = new Dictionary<Object, RuntimeGifData>();
+    private const int GifHeaderBytes = 6;
+    private const int RuntimeGifMaxFrames = 120;
 
+    // ---------------------------------------------------------------------
+    // Lifecycle and visibility
+    // ---------------------------------------------------------------------
     private void Awake()
     {
         if (speakerRect == null)
@@ -117,7 +152,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         gameObject.SetActive(false);
     }
 
-    // Called by DialogueBox when dialogue opens
+    // Called by DialogueBox when dialogue opens.
     public void ShowNormal()
     {
         if (speakerRect == null)
@@ -161,7 +196,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         }
     }
 
-    // Called by DialogueBox when dialogue closes
+    // Called by DialogueBox when dialogue closes.
     public void Hide()
     {
         if (!isVisible || speakerRect == null)
@@ -192,6 +227,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Focus mode
+    // ---------------------------------------------------------------------
     public void ToggleFocus()
     {
         if (!isVisible)
@@ -252,11 +290,41 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Emotion / GIF selection
+    // ---------------------------------------------------------------------
     public void SetEmotionForLine(int index)
     {
         if (portraitObject == null)
             return;
 
+        // Preferred: raw GIF entries (no GifEmotionAnimation asset needed).
+        if (emotionGifEntries != null && emotionGifEntries.Count > 0)
+        {
+            if (index < 0 || index >= emotionGifEntries.Count)
+                return;
+
+            var entry = emotionGifEntries[index];
+            if (entry == null || entry.gifSource == null)
+            {
+                ClearPortraitAndStopAnimation();
+                return;
+            }
+
+            var runtime = GetRuntimeGifData(entry);
+            if (runtime == null || runtime.frames == null || runtime.frames.Count == 0)
+            {
+                ClearPortraitAndStopAnimation();
+                return;
+            }
+
+            StopEmotionAnimation();
+            currentEmotionKey = entry.gifSource;
+            emotionAnimationCoroutine = StartCoroutine(PlayEmotionFrames(runtime, currentEmotionKey));
+            return;
+        }
+
+        // Legacy fallback: GifEmotionAnimation assets (baked frames supported).
         if (emotionAnimations == null || emotionAnimations.Count == 0)
             return;
 
@@ -266,35 +334,25 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         var anim = emotionAnimations[index];
         if (anim == null || anim.gifSource == null)
         {
-            StopEmotionAnimation();
-            if (portraitImageComponent != null)
-            {
-                portraitImageComponent.sprite = null;
-                portraitImageComponent.enabled = false;
-            }
+            ClearPortraitAndStopAnimation();
             return;
         }
 
-        var runtime = GetRuntimeGifData(anim);
-        if (runtime == null || runtime.frames == null || runtime.frames.Count == 0)
+        var runtimeAnim = GetRuntimeGifData(anim);
+        if (runtimeAnim == null || runtimeAnim.frames == null || runtimeAnim.frames.Count == 0)
         {
-            StopEmotionAnimation();
-            if (portraitImageComponent != null)
-            {
-                portraitImageComponent.sprite = null;
-                portraitImageComponent.enabled = false;
-            }
+            ClearPortraitAndStopAnimation();
             return;
         }
 
         StopEmotionAnimation();
-        currentEmotionAnimation = anim;
-        emotionAnimationCoroutine = StartCoroutine(PlayEmotionFrames(runtime));
+        currentEmotionKey = anim;
+        emotionAnimationCoroutine = StartCoroutine(PlayEmotionFrames(runtimeAnim, currentEmotionKey));
     }
 
-    private const float RuntimeGifPlaybackFpsCap = 0.9f;
-    private const int RuntimeGifMaxFrames = 120;
-
+    // ---------------------------------------------------------------------
+    // GIF decode and cache
+    // ---------------------------------------------------------------------
     private RuntimeGifData GetRuntimeGifData(GifEmotionAnimation anim)
     {
         if (anim == null)
@@ -318,21 +376,78 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
         // Runtime decode fallback (no manual baking).
         // In builds this requires a different byte-source; for now we support editor playback.
-#if UNITY_EDITOR
-        string path = AssetDatabase.GetAssetPath(anim.gifSource);
-        if (string.IsNullOrEmpty(path))
+        if (!TryReadGifBytesFromAsset(anim.gifSource, out byte[] bytes))
             return null;
 
-        byte[] bytes = File.ReadAllBytes(path);
+        var runtimeData = DecodeGifBytes(bytes, anim.name, anim.loop);
+        if (runtimeData == null)
+            return null;
+
+        runtimeGifCache[anim] = runtimeData;
+        return runtimeData;
+    }
+
+    private RuntimeGifData GetRuntimeGifData(GifEmotionEntry entry)
+    {
+        if (entry == null || entry.gifSource == null)
+            return null;
+
+        if (runtimeGifSourceCache.TryGetValue(entry.gifSource, out var cached))
+        {
+            // Frames are the same; loop behavior can differ per entry.
+            cached.loop = entry.loop;
+            return cached;
+        }
+
+        // Runtime decode fallback (no manual baking).
+        // This uses AssetDatabase to read the GIF bytes in the editor.
+        // In builds, extend this to load from StreamingAssets if you need it.
+        if (!TryReadGifBytesFromAsset(entry.gifSource, out byte[] bytes))
+            return null;
+
+        var runtimeData = DecodeGifBytes(bytes, entry.gifSource.name, entry.loop);
+        if (runtimeData == null)
+            return null;
+
+        runtimeGifSourceCache[entry.gifSource] = runtimeData;
+        return runtimeData;
+    }
+
+    private bool TryReadGifBytesFromAsset(Object sourceAsset, out byte[] bytes)
+    {
+        bytes = null;
+
+#if UNITY_EDITOR
+        string path = AssetDatabase.GetAssetPath(sourceAsset);
+        if (string.IsNullOrEmpty(path))
+            return false;
+
+        bytes = File.ReadAllBytes(path);
+        if (bytes == null || bytes.Length < GifHeaderBytes)
+            return false;
+
+        // Sanity check: make sure these are real GIF bytes.
+        string sig = Encoding.ASCII.GetString(bytes, 0, GifHeaderBytes);
+        if (sig != "GIF87a" && sig != "GIF89a")
+        {
+            Debug.LogError(
+                $"SpeakerBox: The asset bytes for '{sourceAsset.name}' are not a GIF. " +
+                $"AssetPath='{path}', Signature='{sig}'."
+            );
+            return false;
+        }
+
+        return true;
 #else
         Debug.LogError("SpeakerBox: Runtime GIF decode is only implemented in the editor. Bake GIFs or extend runtime byte loading.");
-        return null;
+        return false;
 #endif
+    }
 
+    private RuntimeGifData DecodeGifBytes(byte[] bytes, string namingPrefix, bool loop)
+    {
         var frames = new List<Sprite>();
         var delays = new List<float>();
-
-        float minDelaySeconds = 1f / Mathf.Max(0.0001f, RuntimeGifPlaybackFpsCap);
 
         using (var decoder = new MG.GIF.Decoder(bytes))
         {
@@ -347,8 +462,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
                 tex.filterMode = FilterMode.Point;
                 tex.wrapMode = TextureWrapMode.Clamp;
-
-                tex.name = $"{anim.name}_rt_frame_{frameIndex:000}";
+                tex.name = $"{namingPrefix}_rt_frame_{frameIndex:000}";
 
                 var sprite = Sprite.Create(
                     tex,
@@ -356,10 +470,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
                     new Vector2(0.5f, 0.5f),
                     100f
                 );
-                sprite.name = $"{anim.name}_rt_sprite_{frameIndex:000}";
+                sprite.name = $"{namingPrefix}_rt_sprite_{frameIndex:000}";
 
-                float delaySeconds = Mathf.Max(minDelaySeconds, img.Delay / 1000f);
-
+                float delaySeconds = Mathf.Max(0f, img.Delay / 1000f);
                 frames.Add(sprite);
                 delays.Add(delaySeconds);
 
@@ -371,18 +484,18 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (frames.Count == 0)
             return null;
 
-        var runtimeData = new RuntimeGifData
+        return new RuntimeGifData
         {
             frames = frames,
             delays = delays,
-            loop = anim.loop
+            loop = loop
         };
-
-        runtimeGifCache[anim] = runtimeData;
-        return runtimeData;
     }
 
-    private IEnumerator PlayEmotionFrames(RuntimeGifData runtime)
+    // ---------------------------------------------------------------------
+    // Runtime GIF playback
+    // ---------------------------------------------------------------------
+    private IEnumerator PlayEmotionFrames(RuntimeGifData runtime, object key)
     {
         if (runtime == null || runtime.frames == null || runtime.frames.Count == 0)
             yield break;
@@ -399,18 +512,37 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         {
             for (int i = 0; i < frameCount; i++)
             {
-                if (!isVisible || currentEmotionAnimation == null)
+                if (!isVisible || currentEmotionKey == null || currentEmotionKey != key)
                     yield break;
 
                 var frameSprite = runtime.frames[i];
                 portraitImageComponent.sprite = frameSprite;
                 portraitImageComponent.enabled = (frameSprite != null);
 
-                float delay = (runtime.delays != null && i >= 0 && i < runtime.delays.Count) ? runtime.delays[i] : (1f / Mathf.Max(0.0001f, RuntimeGifPlaybackFpsCap));
+                float baseDelay = (runtime.delays != null && i >= 0 && i < runtime.delays.Count) ? runtime.delays[i] : 0f;
+
+                float speed = Mathf.Max(0.0001f, gifPlaybackSpeed);
+                float scaledDelay = baseDelay / speed;
+
+                // Allow speed to scale the effective fps cap so "speed" really speeds up/slows down.
+                float effectiveFpsCap = Mathf.Max(0.0001f, gifPlaybackFpsCap) * speed;
+                float minDelay = 1f / effectiveFpsCap;
+
+                float delay = Mathf.Max(minDelay, scaledDelay);
                 yield return new WaitForSecondsRealtime(delay);
             }
         }
-        while (runtime.loop && isVisible && currentEmotionAnimation != null);
+        while (runtime.loop && isVisible && currentEmotionKey == key);
+    }
+
+    private void ClearPortraitAndStopAnimation()
+    {
+        StopEmotionAnimation();
+        if (portraitImageComponent != null)
+        {
+            portraitImageComponent.sprite = null;
+            portraitImageComponent.enabled = false;
+        }
     }
 
     private void StopEmotionAnimation()
@@ -421,10 +553,12 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             emotionAnimationCoroutine = null;
         }
 
-        currentEmotionAnimation = null;
+        currentEmotionKey = null;
     }
 
-    // --- helpers -----------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // Animation helpers (movement + background)
+    // ---------------------------------------------------------------------
 
     private IEnumerator SlideSpeaker(Vector2 from, Vector2 to, Vector2 size, float duration, System.Action onComplete = null)
     {

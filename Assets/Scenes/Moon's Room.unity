@@ -263,6 +263,7 @@ MonoBehaviour:
   moveSpeed: 3.5
   acceleration: 20
   moveActionReference: {fileID: -1680190386980627800, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  spawnFacingPulseVelocity: 0.25
 --- !u!61 &28709190
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1373,14 +1374,14 @@ RectTransform:
   m_GameObject: {fileID: 1003393848}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 12, y: 2.6, z: 1}
+  m_LocalScale: {x: 11.5, y: 2.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1929111928}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -1.7}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1003393850
@@ -3038,7 +3039,7 @@ RectTransform:
   m_GameObject: {fileID: 1929111927}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0.42}
-  m_LocalScale: {x: 0.25, y: 1, z: 1}
+  m_LocalScale: {x: 0.22, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1003393849}
@@ -3102,8 +3103,10 @@ MonoBehaviour:
   speakerRect: {fileID: 1929111928}
   portraitObject: {fileID: 1003393848}
   speakerImageRect: {fileID: 428646085}
-  emotionAnimations:
-  - {fileID: 11400000, guid: c8216637256434a5a9c6d769b6ed50cc, type: 2}
+  emotionGifEntries:
+  - gifSource: {fileID: 2800000, guid: 08ead2e3e842246b9aceb9e2eaad3bbc, type: 3}
+    loop: 1
+  emotionAnimations: []
   useNormalForcedRect: 1
   normalPos: {x: 500, y: 325}
   normalSize: {x: 1, y: 1}
@@ -3117,6 +3120,8 @@ MonoBehaviour:
   focusBackground: {fileID: 428646086}
   backgroundTargetAlpha: 0.6
   backgroundFadeDuration: 0.2
+  gifPlaybackSpeed: 1
+  gifPlaybackFpsCap: 1
 --- !u!1 &2102446909
 GameObject:
   m_ObjectHideFlags: 0
@@ -3213,7 +3218,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4187897993160911825, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: SpawnDirections.Array.size
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4187897993160911825, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: SpawnDirections.Array.data[0].y
@@ -3229,15 +3234,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5234460997662194087, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: doorToLoad
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6610373304545627694, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.73
+      value: -1.71
       objectReference: {fileID: 0}
     - target: {fileID: 6610373304545627694, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.87
+      value: -2.78
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.x
