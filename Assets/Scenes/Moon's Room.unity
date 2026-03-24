@@ -3104,7 +3104,7 @@ MonoBehaviour:
   portraitObject: {fileID: 1003393848}
   speakerImageRect: {fileID: 428646085}
   emotionGifEntries:
-  - gifSource: {fileID: 2800000, guid: 08ead2e3e842246b9aceb9e2eaad3bbc, type: 3}
+  - gifSource: {fileID: 2800000, guid: c752060df94b74b56ad77cb2f1458562, type: 3}
     loop: 1
   emotionAnimations: []
   useNormalForcedRect: 1
