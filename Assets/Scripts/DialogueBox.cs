@@ -145,6 +145,9 @@ public class DialogueBox : MonoBehaviour
         if (dialogueText != null)
             dialogueText.text = "";
 
+        if (PlayerController.I != null)
+            PlayerController.I.movementLocked = true;
+
         if (slideAnimationCoroutine != null)
             StopCoroutine(slideAnimationCoroutine);
         slideAnimationCoroutine = StartCoroutine(ShowDialogueAndSlideUp());
@@ -180,6 +183,9 @@ public class DialogueBox : MonoBehaviour
 
         if (continueIndicator != null)
             continueIndicator.SetActive(false);
+
+        if (PlayerController.I != null)
+            PlayerController.I.movementLocked = false;
 
         // Tell speaker to slide out
         SpeakerHide();

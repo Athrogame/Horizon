@@ -33,6 +33,8 @@ public class PlayerController : MonoBehaviour
     private float lastMoveX = 0f;
     private float lastMoveY = -1f;
 
+    public bool movementLocked = false;
+
     private void Awake()
     {
         if (I == null)
@@ -150,6 +152,18 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (movementLocked)
+        {
+            rb.linearVelocity = Vector2.zero;
+            if (animator != null)
+            {
+                animator.SetBool(IsMoving, false);
+                animator.SetFloat(MoveX, lastMoveX);
+                animator.SetFloat(MoveY, lastMoveY);
+            }
+            return;
+        }
+
         Vector2 input = moveInput;
         if (input.sqrMagnitude < MoveDeadzone)
             input = Vector2.zero;
