@@ -155,12 +155,6 @@ public class PlayerController : MonoBehaviour
         if (movementLocked)
         {
             rb.linearVelocity = Vector2.zero;
-            if (animator != null)
-            {
-                animator.SetBool(IsMoving, false);
-                animator.SetFloat(MoveX, lastMoveX);
-                animator.SetFloat(MoveY, lastMoveY);
-            }
             return;
         }
 
@@ -212,5 +206,15 @@ public class PlayerController : MonoBehaviour
             return new Vector2(Mathf.Sign(direction.x), 0f);
 
         return new Vector2(0f, Mathf.Sign(direction.y));
+    }
+
+    public void ForceIdle()
+    {
+        if (animator != null)
+        {
+            animator.SetBool(IsMoving, false);
+            animator.SetFloat(MoveX, lastMoveX);
+            animator.SetFloat(MoveY, lastMoveY);
+        }
     }
 }

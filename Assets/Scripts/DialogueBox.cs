@@ -3,7 +3,38 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem;using UnityEngine.InputSystem;
+
+[System.Serializable]
+public class DialogueLine
+{
+    [TextArea(3, 10)]
+    public string text;
+    [Tooltip("If checked, this text will append to the end of the previous text box instead of clearing it.")]
+    public bool appendToPrevious = false;
+    [Tooltip("Delay in seconds from the time this line starts before the player is allowed to skip typing or advance.")]
+    public float delayBeforeSkipAllowed = 0f;
+    [Tooltip("Font size for this specific line. Default is 57.")]
+    public float fontSize = 57f;
+    [Tooltip("Custom typing speed for this line. Set to 0 to use the global textSpeed.")]
+    public float customSpeed = 0f;
+    [Tooltip("If checked, characters string will bounce up and down!")]
+    public bool emphasizeLine = false;
+    [Tooltip("Event triggered exactly when this line finishes and the player advances to the next one.")]
+    public UnityEngine.Events.UnityEvent onLineFinished;
+
+    public DialogueLine() {}
+    public DialogueLine(string text)
+    {
+        this.text = text;
+        this.appendToPrevious = false;
+        this.delayBeforeSkipAllowed = 0f;
+        this.fontSize = 57f;
+        this.customSpeed = 0f;
+        this.emphasizeLine = false;
+        this.onLineFinished = new UnityEngine.Events.UnityEvent();
+    }
+}
 
 public class DialogueBox : MonoBehaviour
 {
@@ -13,18 +44,27 @@ public class DialogueBox : MonoBehaviour
 
     [Header("Settings")]
     public float textSpeed = 30f;
+    public float fastForwardMultiplier = 4f;
     public InputActionReference advanceAction;
     public float indicatorDelay = 0.5f;
+    [Tooltip("If true, automatically runs inspector dialogue lines when GameObject is turned on.")]
+    public bool playOnEnable = true;
+    [Tooltip("If true, forces player to idle animation during dialogue (Uncheck for timelines!).")]
+    public bool forcePlayerIdle = false;
 
     [Header("Audio (Optional)")]
     public AudioSource typingSound;
     public int typingSoundInterval = 3;
 
+    [Header("Events")]
+    [Tooltip("Fired when the entire dialogue box finishes all lines and closes.")]
+    public UnityEngine.Events.UnityEvent onDialogueClosed;
+
     [Header("Panel Animation")]
     public float slideUpDuration = 0.5f;
     public float slideDownDuration = 0.5f;
     public float closeDelay = 0.15f;
-    public float hiddenOffset = 800f;
+    public float hiddenOffset = 5000f;
 
     [Header("Forced Rect Transform (panel)")]
     public bool useForcedRectTransform = true;
@@ -39,16 +79,19 @@ public class DialogueBox : MonoBehaviour
     public float scaleMultiplier = 0.85f;
 
     [Header("Dialogue Lines")]
-    public List<string> dialogueLines = new List<string>();
+    public List<DialogueLine> dialogueLines = new List<DialogueLine>();
 
     [Header("Speaker Controller (new script)")]
     [Tooltip("Drag the GameObject that has SpeakerBox on it here.")]
     public MonoBehaviour speakerBoxController; // SpeakerBox component (runtime-called)
 
-    private List<string> dialogueQueue = new List<string>();
+    private List<DialogueLine> dialogueQueue = new List<DialogueLine>();
     private int currentDialogueIndex = 0;
     private bool isDisplayingText = false;
+    private bool isFastForwarding = false;
     private bool canAdvance = false;
+    private float skipAllowedTime = 0f;
+    private string baseTextBeforeAppending = "";
     private Coroutine typewriterCoroutine;
     private Coroutine slideAnimationCoroutine;
     private InputAction advanceInput;
@@ -62,6 +105,8 @@ public class DialogueBox : MonoBehaviour
 
     private void Awake()
     {
+        if (hiddenOffset < 5000f) hiddenOffset = 5000f;
+
         rectTransform = GetComponent<RectTransform>();
         if (rectTransform == null)
         {
@@ -105,6 +150,12 @@ public class DialogueBox : MonoBehaviour
     private void OnEnable()
     {
         advanceInput?.Enable();
+
+        // If something manually turns this Game Object on without passing lines, we auto-play the inspector lines.
+        if (playOnEnable && dialogueQueue != null && dialogueQueue.Count == 0)
+        {
+            StartDialogue();
+        }
     }
 
     private void OnDisable()
@@ -114,24 +165,36 @@ public class DialogueBox : MonoBehaviour
 
     private void Update()
     {
-        if (canAdvance && advanceInput != null && advanceInput.WasPressedThisFrame())
+        if (advanceInput != null && advanceInput.WasPressedThisFrame())
         {
-            AdvanceDialogue();
+            if (Time.time < skipAllowedTime) return; // Prevent skipping/advancing during the unskippable delay
+
+            if (isDisplayingText)
+            {
+                isFastForwarding = true;
+            }
+            else if (canAdvance)
+            {
+                AdvanceDialogue();
+            }
         }
+        
+        UpdateVertexAnimation();
     }
 
     // --- Public API --------------------------------------------------------
 
-    public void ShowDialogue(List<string> messages)
+    public void ShowDialogue(List<DialogueLine> lines)
     {
-        if (messages == null || messages.Count == 0)
+        if (lines == null || lines.Count == 0)
         {
             Debug.LogWarning("DialogueBox: No messages provided.");
             return;
         }
 
-        dialogueQueue = new List<string>(messages);
+        dialogueQueue = new List<DialogueLine>(lines);
         currentDialogueIndex = 0;
+        baseTextBeforeAppending = "";
 
         // Ensure this object and parents are active
         Transform t = transform;
@@ -146,7 +209,10 @@ public class DialogueBox : MonoBehaviour
             dialogueText.text = "";
 
         if (PlayerController.I != null)
+        {
             PlayerController.I.movementLocked = true;
+            if (forcePlayerIdle) PlayerController.I.ForceIdle();
+        }
 
         if (slideAnimationCoroutine != null)
             StopCoroutine(slideAnimationCoroutine);
@@ -154,6 +220,14 @@ public class DialogueBox : MonoBehaviour
 
         // Let speaker controller know dialogue started
         SpeakerShowNormal();
+    }
+
+    public void ShowDialogue(List<string> messages)
+    {
+        if (messages == null || messages.Count == 0) return;
+        List<DialogueLine> lines = new List<DialogueLine>();
+        foreach (var m in messages) lines.Add(new DialogueLine(m));
+        ShowDialogue(lines);
     }
 
     public void ShowDialogue(string message)
@@ -179,6 +253,7 @@ public class DialogueBox : MonoBehaviour
         dialogueQueue.Clear();
         currentDialogueIndex = 0;
         isDisplayingText = false;
+        isFastForwarding = false;
         canAdvance = false;
 
         if (continueIndicator != null)
@@ -189,6 +264,8 @@ public class DialogueBox : MonoBehaviour
 
         // Tell speaker to slide out
         SpeakerHide();
+
+        onDialogueClosed?.Invoke();
 
         if (rectTransform != null && gameObject.activeSelf)
         {
@@ -277,17 +354,18 @@ public class DialogueBox : MonoBehaviour
             return;
         }
 
-        string currentText = dialogueQueue[currentDialogueIndex];
+        DialogueLine line = dialogueQueue[currentDialogueIndex];
+        skipAllowedTime = Time.time + line.delayBeforeSkipAllowed;
 
         SpeakerSetEmotionForLine(currentDialogueIndex);
 
         if (typewriterCoroutine != null)
             StopCoroutine(typewriterCoroutine);
 
-        typewriterCoroutine = StartCoroutine(TypewriterEffect(currentText));
+        typewriterCoroutine = StartCoroutine(TypewriterEffect(line));
     }
 
-    private IEnumerator TypewriterEffect(string fullText)
+    private IEnumerator TypewriterEffect(DialogueLine line)
     {
         if (dialogueText == null)
         {
@@ -297,23 +375,46 @@ public class DialogueBox : MonoBehaviour
         }
 
         isDisplayingText = true;
+        isFastForwarding = false;
         canAdvance = false;
 
         if (continueIndicator != null)
             continueIndicator.SetActive(false);
 
-        dialogueText.text = "";
-        int charCount = 0;
-
-        foreach (char c in fullText)
+        if (line.appendToPrevious)
         {
-            dialogueText.text += c;
+            baseTextBeforeAppending = dialogueText.text;
+        }
+        else
+        {
+            baseTextBeforeAppending = "";
+            dialogueText.text = "";
+        }
+
+        int charCount = 0;
+        string currentTextToType = line.text ?? "";
+        string newlyTyped = "";
+        string sizePrefix = $"<size={line.fontSize}>";
+        string sizeSuffix = "</size>";
+        
+        if (line.emphasizeLine)
+        {
+            sizePrefix += "<link=\"bounce\">";
+            sizeSuffix = "</link>" + sizeSuffix;
+        }
+
+        foreach (char c in currentTextToType)
+        {
+            newlyTyped += c;
+            dialogueText.text = baseTextBeforeAppending + sizePrefix + newlyTyped + sizeSuffix;
             charCount++;
 
             if (typingSound != null && charCount % (typingSoundInterval + 1) == 0)
                 typingSound.Play();
 
-            yield return new WaitForSeconds(1f / textSpeed);
+            float baseSpeed = line.customSpeed > 0f ? line.customSpeed : textSpeed;
+            float currentSpeed = isFastForwarding ? (baseSpeed * fastForwardMultiplier) : baseSpeed;
+            yield return new WaitForSeconds(1f / currentSpeed);
         }
 
         isDisplayingText = false;
@@ -326,7 +427,7 @@ public class DialogueBox : MonoBehaviour
             {
                 var nextText = continueIndicator.GetComponent<TextMeshProUGUI>();
                 if (nextText != null)
-                    nextText.text = "Press E to continue";
+                    nextText.text = "->>";
                 continueIndicator.SetActive(true);
                 StartCoroutine(BlinkIndicator());
             }
@@ -347,26 +448,17 @@ public class DialogueBox : MonoBehaviour
     private void AdvanceDialogue()
     {
         if (isDisplayingText)
-        {
-            if (typewriterCoroutine != null)
-                StopCoroutine(typewriterCoroutine);
-
-            dialogueText.text = dialogueQueue[currentDialogueIndex];
-            isDisplayingText = false;
-            canAdvance = true;
-
-            if (continueIndicator != null)
-            {
-                var nextText = continueIndicator.GetComponent<TextMeshProUGUI>();
-                if (nextText != null)
-                    nextText.text = "Press E to continue";
-                continueIndicator.SetActive(true);
-                StartCoroutine(BlinkIndicator());
-            }
             return;
+
+        int finishedIndex = currentDialogueIndex;
+        currentDialogueIndex++;
+
+        // Trigger the event for the line we just finished passing
+        if (finishedIndex < dialogueQueue.Count)
+        {
+            dialogueQueue[finishedIndex].onLineFinished?.Invoke();
         }
 
-        currentDialogueIndex++;
         StartDisplayingText();
     }
 
@@ -393,6 +485,61 @@ public class DialogueBox : MonoBehaviour
         isAnimating = false;
 
         StartDisplayingText();
+    }
+
+    private void UpdateVertexAnimation()
+    {
+        if (dialogueText == null || !gameObject.activeInHierarchy || dialogueText.textInfo == null) return;
+
+        // Ensure mesh is generated
+        dialogueText.ForceMeshUpdate(false, false);
+        var textInfo = dialogueText.textInfo;
+
+        if (textInfo.characterCount == 0 || textInfo.linkCount == 0) return;
+
+        bool hasChanges = false;
+
+        for (int i = 0; i < textInfo.linkCount; i++)
+        {
+            var linkInfo = textInfo.linkInfo[i];
+            if (linkInfo.GetLinkID() == "bounce")
+            {
+                hasChanges = true;
+                int firstChar = linkInfo.linkTextfirstCharacterIndex;
+                int lastChar = firstChar + linkInfo.linkTextLength;
+
+                for (int j = firstChar; j < lastChar; j++)
+                {
+                    if (j >= textInfo.characterCount) break;
+
+                    var charInfo = textInfo.characterInfo[j];
+                    if (!charInfo.isVisible) continue;
+
+                    int materialIndex = charInfo.materialReferenceIndex;
+                    int vertexIndex = charInfo.vertexIndex;
+
+                    Vector3[] vertices = textInfo.meshInfo[materialIndex].vertices;
+
+                    // Omori bounce offset
+                    float offset = Mathf.Sin(Time.time * 20f + j * 0.8f) * 6f;
+
+                    vertices[vertexIndex + 0].y += offset;
+                    vertices[vertexIndex + 1].y += offset;
+                    vertices[vertexIndex + 2].y += offset;
+                    vertices[vertexIndex + 3].y += offset;
+                }
+            }
+        }
+
+        if (hasChanges)
+        {
+            for (int i = 0; i < textInfo.materialCount; i++)
+            {
+                if (textInfo.meshInfo[i].mesh == null || textInfo.meshInfo[i].vertices == null) continue;
+                textInfo.meshInfo[i].mesh.vertices = textInfo.meshInfo[i].vertices;
+                dialogueText.UpdateGeometry(textInfo.meshInfo[i].mesh, i);
+            }
+        }
     }
 
     private IEnumerator SlideDown()

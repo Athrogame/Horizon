@@ -57,12 +57,11 @@ public class ShowDialogueOnKey : MonoBehaviour
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        // Always check E key so dialogue opens when E is pressed (even if Interact action doesn't fire)
-        bool ePressed = keyboard.eKey.wasPressedThisFrame;
-        if (!ePressed && interactAction == null || interactAction?.action == null)
-            ePressed = keyboard[triggerKeyInput].wasPressedThisFrame;
+        bool pressed = false;
+        if (interactAction == null || interactAction.action == null)
+            pressed = keyboard[triggerKeyInput].wasPressedThisFrame;
 
-        if (ePressed)
+        if (pressed)
         {
             if (dialogueBox == null)
                 dialogueBox = FindObjectOfType<DialogueBox>(true);
