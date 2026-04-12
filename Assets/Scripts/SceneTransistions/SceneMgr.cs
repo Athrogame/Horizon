@@ -57,14 +57,14 @@ public class SceneMgr : MonoBehaviour
         else
             DoLoadScene(sceneIndex);
     }
-
+    public float FadeInSpeed;
     private IEnumerator LoadSceneWithTransition(int sceneIndex)
     {
         transitionAnim.SetTrigger(EndTrigger);
         yield return new WaitForSecondsRealtime(fadeOutDuration);
 
         DoLoadScene(sceneIndex);
-
+        yield return new WaitForSeconds(FadeInSpeed);
         // Fade back out (panel goes from black to transparent)
         transitionAnim.Play("New Animation", 0, 0f);
     }
