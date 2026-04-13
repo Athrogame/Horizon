@@ -24,6 +24,11 @@ public class CutsceneActionDrawer : PropertyDrawer
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("targetToMove")) + 2f;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("destinationNode")) + 2f;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("moveSpeed")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("useTweening")) + 2f;
+            if (property.FindPropertyRelative("useTweening").boolValue)
+            {
+                h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("tweenCurve")) + 2f;
+            }
         }
         else if (typeIndex == (int)CutsceneActionType.TeleportObject) 
         {
@@ -39,6 +44,32 @@ public class CutsceneActionDrawer : PropertyDrawer
         {
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("targetAnimator")) + 2f;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("animationTriggerName")) + 2f;
+        }
+        else if (typeIndex == (int)CutsceneActionType.SetAnimationBool) 
+        {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("targetAnimator")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("animationBoolName")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("animationBoolValue")) + 2f;
+        }
+        else if (typeIndex == (int)CutsceneActionType.PlayAnimationState) 
+        {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("targetAnimator")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("animationClip")) + 2f;
+        }
+        else if (typeIndex == (int)CutsceneActionType.SetActive) 
+        {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("targetGameObject")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("setActiveState")) + 2f;
+        }
+        else if (typeIndex == (int)CutsceneActionType.CameraShake) 
+        {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("shakeDuration")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("shakeMagnitude")) + 2f;
+        }
+        else if (typeIndex == (int)CutsceneActionType.ChangeCameraTarget) 
+        {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("virtualCamera")) + 2f;
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("cameraFollowTarget")) + 2f;
         }
 
         return h + 4f; // Bottom padding
@@ -76,6 +107,11 @@ public class CutsceneActionDrawer : PropertyDrawer
                 DrawProp(ref rect, property.FindPropertyRelative("targetToMove"), new GUIContent("Who To Move"));
                 DrawProp(ref rect, property.FindPropertyRelative("destinationNode"), new GUIContent("Destination Waypoint"));
                 DrawProp(ref rect, property.FindPropertyRelative("moveSpeed"));
+                DrawProp(ref rect, property.FindPropertyRelative("useTweening"));
+                if (property.FindPropertyRelative("useTweening").boolValue)
+                {
+                    DrawProp(ref rect, property.FindPropertyRelative("tweenCurve"));
+                }
             }
             else if (typeIndex == (int)CutsceneActionType.TeleportObject) 
             {
@@ -91,6 +127,32 @@ public class CutsceneActionDrawer : PropertyDrawer
             {
                 DrawProp(ref rect, property.FindPropertyRelative("targetAnimator"));
                 DrawProp(ref rect, property.FindPropertyRelative("animationTriggerName"));
+            }
+            else if (typeIndex == (int)CutsceneActionType.SetAnimationBool) 
+            {
+                DrawProp(ref rect, property.FindPropertyRelative("targetAnimator"));
+                DrawProp(ref rect, property.FindPropertyRelative("animationBoolName"));
+                DrawProp(ref rect, property.FindPropertyRelative("animationBoolValue"));
+            }
+            else if (typeIndex == (int)CutsceneActionType.PlayAnimationState) 
+            {
+                DrawProp(ref rect, property.FindPropertyRelative("targetAnimator"));
+                DrawProp(ref rect, property.FindPropertyRelative("animationClip"));
+            }
+            else if (typeIndex == (int)CutsceneActionType.SetActive) 
+            {
+                DrawProp(ref rect, property.FindPropertyRelative("targetGameObject"));
+                DrawProp(ref rect, property.FindPropertyRelative("setActiveState"));
+            }
+            else if (typeIndex == (int)CutsceneActionType.CameraShake) 
+            {
+                DrawProp(ref rect, property.FindPropertyRelative("shakeDuration"));
+                DrawProp(ref rect, property.FindPropertyRelative("shakeMagnitude"));
+            }
+            else if (typeIndex == (int)CutsceneActionType.ChangeCameraTarget) 
+            {
+                DrawProp(ref rect, property.FindPropertyRelative("virtualCamera"), new GUIContent("Virtual Camera"));
+                DrawProp(ref rect, property.FindPropertyRelative("cameraFollowTarget"), new GUIContent("Follow Target"));
             }
         }
         EditorGUI.EndProperty();

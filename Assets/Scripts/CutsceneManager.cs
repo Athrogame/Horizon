@@ -73,9 +73,9 @@ public class CutsceneManager : MonoBehaviour
                     if (action.targetToMove != null && action.destinationNode != null)
                     {
                         if (action.waitToFinish)
-                            yield return StartCoroutine(MoveRoutine(action.targetToMove, action.destinationNode, action.moveSpeed));
+                            yield return StartCoroutine(MoveRoutine(action.targetToMove, action.destinationNode, action.moveSpeed, action.useTweening, action.tweenCurve));
                         else
-                            StartCoroutine(MoveRoutine(action.targetToMove, action.destinationNode, action.moveSpeed));
+                            StartCoroutine(MoveRoutine(action.targetToMove, action.destinationNode, action.moveSpeed, action.useTweening, action.tweenCurve));
                     }
                     else
                     {
@@ -140,8 +140,8 @@ public class CutsceneManager : MonoBehaviour
                         
                         if (action.waitToFinish)
                         {
-                            // Wait perfectly in limbo until the Dialogue Box has completely finished and vanished from the screen
-                            while (dBox.gameObject.activeSelf)
+                            // Wait perfectly in limbo until the Dialogue Box has completely finished reading its lines
+                            while (dBox.IsDialogueActive())
                             {
                                 yield return null;
                             }
@@ -159,6 +159,82 @@ public class CutsceneManager : MonoBehaviour
                         action.targetAnimator.SetTrigger(action.animationTriggerName);
                     }
                     break;
+                case CutsceneActionType.SetAnimationBool:
+                    if (action.targetAnimator != null && !string.IsNullOrEmpty(action.animationBoolName))
+                    {
+                        action.targetAnimator.SetBool(action.animationBoolName, action.animationBoolValue);
+                    }
+                    break;
+                case CutsceneActionType.PlayAnimationState:
+                    if (action.targetAnimator != null && action.animationClip != null)
+                    {
+                        action.targetAnimator.Play(action.animationClip.name);
+                    }
+                    break;
+
+                case CutsceneActionType.SetActive:
+                    if (action.targetGameObject != null)
+                    {
+                        action.targetGameObject.SetActive(action.setActiveState);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Cutscene Action Failed: Missing GameObject to SetActive!");
+                    }
+                    break;
+
+                case CutsceneActionType.CameraShake:
+                    if (action.waitToFinish)
+                        yield return StartCoroutine(CameraShakeRoutine(action.shakeDuration, action.shakeMagnitude, action.shakeVirtualCamera));
+                    else
+                        StartCoroutine(CameraShakeRoutine(action.shakeDuration, action.shakeMagnitude, action.shakeVirtualCamera));
+                    break;
+
+                case CutsceneActionType.ChangeCameraTarget:
+                    if (action.virtualCamera != null && action.cameraFollowTarget != null)
+                    {
+                        Component vcam = action.virtualCamera.GetComponent("CinemachineCamera");
+                        if (vcam == null) vcam = action.virtualCamera.GetComponent("Unity.Cinemachine.CinemachineCamera");
+                        if (vcam == null) vcam = action.virtualCamera.GetComponent("CinemachineVirtualCamera");
+
+                        if (vcam != null)
+                        {
+                            // Try V2 Properties
+                            var propFollow = vcam.GetType().GetProperty("Follow");
+                            if (propFollow != null) propFollow.SetValue(vcam, action.cameraFollowTarget, null);
+                            
+                            var propLookAt = vcam.GetType().GetProperty("LookAt");
+                            if (propLookAt != null) propLookAt.SetValue(vcam, action.cameraFollowTarget, null);
+
+                            // Try V3 Struct properties
+                            var propTarget = vcam.GetType().GetProperty("Target");
+                            if (propTarget != null)
+                            {
+                                object targetStruct = propTarget.GetValue(vcam); 
+                                if (targetStruct != null)
+                                {
+                                    var fTracking = targetStruct.GetType().GetField("TrackingTarget");
+                                    if (fTracking != null) fTracking.SetValue(targetStruct, action.cameraFollowTarget);
+                                    
+                                    var pTracking = targetStruct.GetType().GetProperty("TrackingTarget");
+                                    if (pTracking != null) pTracking.SetValue(targetStruct, action.cameraFollowTarget, null);
+
+                                    var fLookA = targetStruct.GetType().GetField("LookAtTarget");
+                                    if (fLookA != null) fLookA.SetValue(targetStruct, action.cameraFollowTarget);
+                                    
+                                    var pLookA = targetStruct.GetType().GetProperty("LookAtTarget");
+                                    if (pLookA != null) pLookA.SetValue(targetStruct, action.cameraFollowTarget, null);
+
+                                    propTarget.SetValue(vcam, targetStruct, null);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("ChangeCameraTarget Failed: Could not find CinemachineCamera or CinemachineVirtualCamera component on the provided object.");
+                        }
+                    }
+                    break;
             }
         }
 
@@ -169,17 +245,101 @@ public class CutsceneManager : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveRoutine(Transform target, Transform dest, float speed)
+    private IEnumerator MoveRoutine(Transform target, Transform dest, float speed, bool useTweening, TweenCurve curve)
     {
+        Vector3 startPos = target.position;
         // Enforce strict 2D movement by never altering the character's original Z depth
         Vector3 endPos = new Vector3(dest.position.x, dest.position.y, target.position.z);
 
-        // Smoothly lerp towards position until extremely close
-        while (Vector3.Distance(target.position, endPos) > 0.05f)
+        if (useTweening)
         {
-            target.position = Vector3.MoveTowards(target.position, endPos, speed * Time.deltaTime);
-            yield return null;
+            float distance = Vector3.Distance(startPos, endPos);
+            if (distance <= 0.001f) yield break;
+            
+            float duration = distance / speed;
+            float elapsedTime = 0f;
+
+            while (elapsedTime < duration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / duration;
+                
+                if (curve == TweenCurve.EaseInOut)
+                {
+                    // Starts slow, speeds up, ends slow
+                    t = Mathf.SmoothStep(0f, 1f, t);
+                }
+                else if (curve == TweenCurve.EaseIn)
+                {
+                    // Starts slow, ends fast (Quadratic)
+                    t = t * t;
+                }
+                else if (curve == TweenCurve.EaseOut)
+                {
+                    // Starts fast, ends slow (Quadratic)
+                    t = t * (2f - t);
+                }
+                
+                target.position = Vector3.Lerp(startPos, endPos, t);
+                yield return null;
+            }
+            target.position = endPos; // Snap perfectly to end to prevent micro-errors
         }
-        target.position = endPos; // Snap perfectly to end to prevent micro-errors
+        else
+        {
+            // Linear movement (no tweening)
+            while (Vector3.Distance(target.position, endPos) > 0.05f)
+            {
+                target.position = Vector3.MoveTowards(target.position, endPos, speed * Time.deltaTime);
+                yield return null;
+            }
+            target.position = endPos; // Snap perfectly to end to prevent micro-errors
+        }
+    }
+
+    private IEnumerator CameraShakeRoutine(float duration, float magnitude, GameObject virtualCamera)
+    {
+        if (virtualCamera == null)
+        {
+            Debug.LogWarning("CameraShake Failed: No Virtual Camera assigned! Drag your Cinemachine Virtual Camera into the 'Shake Virtual Camera' slot on the CameraShake action.");
+            yield break;
+        }
+
+        // Support Cinemachine v2 and v3 (Unity package namespace differs)
+        Component noiseComp = virtualCamera.GetComponent("CinemachineBasicMultiChannelPerlin");
+        if (noiseComp == null)
+            noiseComp = virtualCamera.GetComponent("Unity.Cinemachine.CinemachineBasicMultiChannelPerlin");
+
+        if (noiseComp == null)
+        {
+            Debug.LogWarning($"CameraShake Failed: '{virtualCamera.name}' has no CinemachineBasicMultiChannelPerlin component. " +
+                             "Select your Virtual Camera and go Add Component > Cinemachine > Noise > Basic Multi Channel Perlin, then assign a noise profile.");
+            yield break;
+        }
+
+        // v3 exposes a property called AmplitudeGain; v2 uses the serialized field m_AmplitudeGain
+        var ampProp  = noiseComp.GetType().GetProperty("AmplitudeGain");
+        var ampField = noiseComp.GetType().GetField("m_AmplitudeGain");
+
+        if (ampProp == null && ampField == null)
+        {
+            Debug.LogWarning("CameraShake Failed: Could not find AmplitudeGain on the noise component.");
+            yield break;
+        }
+
+        // Remember the original amplitude so we can restore it cleanly after the shake
+        float originalAmplitude = ampProp != null
+            ? (float)ampProp.GetValue(noiseComp)
+            : (float)ampField.GetValue(noiseComp);
+
+        // Set shake amplitude — Cinemachine reads this every frame, so it works immediately
+        if (ampProp  != null) ampProp.SetValue(noiseComp, magnitude);
+        else                  ampField.SetValue(noiseComp, magnitude);
+
+        yield return new WaitForSeconds(duration);
+
+        // Restore the original amplitude when done
+        if (ampProp  != null) ampProp.SetValue(noiseComp, originalAmplitude);
+        else                  ampField.SetValue(noiseComp, originalAmplitude);
     }
 }

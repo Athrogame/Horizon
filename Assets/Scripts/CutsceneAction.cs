@@ -1,5 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
+public enum TweenCurve
+{
+    EaseInOut,
+    EaseIn,
+    EaseOut
+}
 
 public enum CutsceneActionType
 {
@@ -7,7 +13,12 @@ public enum CutsceneActionType
     MoveToTransform,
     ShowDialogue,
     SetAnimationTrigger,
-    TeleportObject
+    SetAnimationBool,
+    PlayAnimationState,
+    TeleportObject,
+    SetActive,
+    CameraShake,
+    ChangeCameraTarget
 }
 
 [System.Serializable]
@@ -30,6 +41,10 @@ public class CutsceneAction
     public Transform destinationNode;
     [Tooltip("Speed to move from A to B")]
     public float moveSpeed = 5f;
+    [Tooltip("If true, allows applying a mathematical curve to the movement instead of linear")]
+    public bool useTweening = false;
+    [Tooltip("Which type of ease to apply to the motion")]
+    public TweenCurve tweenCurve = TweenCurve.EaseInOut;
 
     [Header("Dialogue Settings")]
     [Tooltip("Leave empty to automatically find your main DialogueBox")]
@@ -41,4 +56,30 @@ public class CutsceneAction
     public Animator targetAnimator;
     [Tooltip("The exact string name of the Trigger inside the animator (e.g. 'Jump')")]
     public string animationTriggerName;
+    [Tooltip("The exact string name of the Bool inside the animator")]
+    public string animationBoolName;
+    [Tooltip("The value to set the boolean to")]
+    public bool animationBoolValue = true;
+    [Tooltip("Drag the Animation Clip here to play it directly (Note: Its state in the Animator must have the same name)")]
+    public AnimationClip animationClip;
+
+    [Header("Set Active Settings")]
+    [Tooltip("The object to enable or disable")]
+    public GameObject targetGameObject;
+    [Tooltip("Check to activate the object, uncheck to deactivate it")]
+    public bool setActiveState = true;
+
+    [Header("Camera Shake Settings")]
+    [Tooltip("The Cinemachine Virtual Camera that has a CinemachineBasicMultiChannelPerlin noise component on it")]
+    public GameObject shakeVirtualCamera;
+    [Tooltip("How long the camera should shake (in seconds)")]
+    public float shakeDuration = 0.5f;
+    [Tooltip("How violent the shake is — this sets the noise AmplitudeGain temporarily")]
+    public float shakeMagnitude = 0.3f;
+
+    [Header("Cinemachine Settings")]
+    [Tooltip("The Cinemachine Virtual Camera (drag from Hierarchy)")]
+    public GameObject virtualCamera;
+    [Tooltip("The object you want the camera to focus on and follow instead")]
+    public Transform cameraFollowTarget;
 }

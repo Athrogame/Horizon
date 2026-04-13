@@ -673,7 +673,7 @@ Transform:
   m_GameObject: {fileID: 312903731}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.936, y: -3.07, z: 0}
+  m_LocalPosition: {x: -4.936, y: -2.86, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1034,66 +1034,204 @@ MonoBehaviour:
   playOnStart: 1
   playOnEnable: 0
   cutsceneActions:
-  - actionType: 4
+  - actionType: 6
     waitToFinish: 0
     waitDuration: 0
     targetToMove: {fileID: 28709193}
     destinationNode: {fileID: 626373360}
     moveSpeed: 0
+    useTweening: 0
+    tweenCurve: 0
     dialogueBox: {fileID: 0}
     dialogueLines: []
     targetAnimator: {fileID: 0}
     animationTriggerName: 
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
   - actionType: 3
     waitToFinish: 0
     waitDuration: 0
     targetToMove: {fileID: 28709193}
     destinationNode: {fileID: 626373360}
     moveSpeed: 0
+    useTweening: 0
+    tweenCurve: 0
     dialogueBox: {fileID: 0}
     dialogueLines: []
     targetAnimator: {fileID: 28709194}
     animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
   - actionType: 0
     waitToFinish: 1
     waitDuration: 5
     targetToMove: {fileID: 28709193}
     destinationNode: {fileID: 626373360}
     moveSpeed: 0
+    useTweening: 0
+    tweenCurve: 0
     dialogueBox: {fileID: 0}
     dialogueLines: []
     targetAnimator: {fileID: 28709194}
     animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
   - actionType: 2
     waitToFinish: 1
     waitDuration: 5
     targetToMove: {fileID: 28709193}
     destinationNode: {fileID: 626373360}
     moveSpeed: 0
+    useTweening: 0
+    tweenCurve: 0
     dialogueBox: {fileID: 1647079238}
     dialogueLines: []
     targetAnimator: {fileID: 28709194}
     animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 5
+    waitToFinish: 0
+    waitDuration: 5
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 312903732}
+    moveSpeed: 3.7
+    useTweening: 0
+    tweenCurve: 0
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 7400000, guid: 6708f7bd7b5cc58428fdd548f075f9ae, type: 2}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
   - actionType: 1
     waitToFinish: 1
     waitDuration: 5
     targetToMove: {fileID: 28709193}
     destinationNode: {fileID: 1080052700}
-    moveSpeed: 3
+    moveSpeed: 4.5
+    useTweening: 1
+    tweenCurve: 2
     dialogueBox: {fileID: 1647079238}
     dialogueLines: []
     targetAnimator: {fileID: 28709194}
     animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 7
+    waitToFinish: 0
+    waitDuration: 5
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 312903732}
+    moveSpeed: 3.7
+    useTweening: 0
+    tweenCurve: 0
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 1697980599}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
   - actionType: 1
     waitToFinish: 1
     waitDuration: 5
     targetToMove: {fileID: 28709193}
     destinationNode: {fileID: 312903732}
-    moveSpeed: 3
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
     dialogueBox: {fileID: 1647079238}
     dialogueLines: []
     targetAnimator: {fileID: 28709194}
     animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.1
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 8
+    waitToFinish: 0
+    waitDuration: 5
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 312903732}
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 0}
+    shakeDuration: 0.5
+    shakeMagnitude: 0.7
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
 --- !u!4 &519624008
 Transform:
   m_ObjectHideFlags: 0
@@ -2258,7 +2396,7 @@ GameObject:
   - component: {fileID: 1399551497}
   - component: {fileID: 1399551500}
   - component: {fileID: 1399551503}
-  - component: {fileID: 1399551502}
+  - component: {fileID: 1399551505}
   m_Layer: 0
   m_Name: CinemachineCamera
   m_TagString: Untagged
@@ -2345,7 +2483,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 8.828125
+  orthographic size: 5.625
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -2474,36 +2612,6 @@ MonoBehaviour:
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   FollowOffset: {x: 0, y: 0, z: -10}
---- !u!114 &1399551502
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1399551490}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e52de21a22b6dd44c9cc19f810c65059, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Timeline::UnityEngine.Timeline.SignalReceiver
-  m_Events:
-    m_Signals:
-    - {fileID: 11400000, guid: 50066a27bf5b245be82b6100121770fd, type: 2}
-    m_Events:
-    - m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1399551503}
-          m_TargetAssemblyTypeName: Unity.Cinemachine.CinemachineImpulseSource, Unity.Cinemachine
-          m_MethodName: GenerateImpulse
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
 --- !u!114 &1399551503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2581,6 +2689,23 @@ MonoBehaviour:
     FrequencyGain: 19.92
     Duration: 7.55
     m_NoiseOffsets: {x: 0, y: 0, z: 0}
+--- !u!114 &1399551505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1399551490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68bb026fafb42b14791938953eaace77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineBasicMultiChannelPerlin
+  NoiseProfile: {fileID: 11400000, guid: 69ce8388f6785dd4c8c39915efece2f4, type: 2}
+  PivotOffset: {x: 0, y: 0, z: 0}
+  AmplitudeGain: 0
+  FrequencyGain: 1
+  m_NoiseOffsets: {x: -566.42676, y: -717.1271, z: 470.29993}
 --- !u!1 &1400772617
 GameObject:
   m_ObjectHideFlags: 0
@@ -4301,7 +4426,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1923585748
 MonoBehaviour:
   m_ObjectHideFlags: 0
