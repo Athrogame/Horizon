@@ -66,18 +66,6 @@ public class DialogueBox : MonoBehaviour
     public float closeDelay = 0.15f;
     public float hiddenOffset = 5000f;
 
-    [Header("Forced Rect Transform (panel)")]
-    public bool useForcedRectTransform = true;
-    public float forcedPosX = -3.2884f;
-    public float forcedPosY = -443.7852f;
-    public float forcedWidth = 1363.656f;
-    public float forcedHeight = 285.1071f;
-
-    [Header("Layout (when not using forced rect)")]
-    public float visiblePositionYOffset = 100f;
-    [Range(0.5f, 1.5f)]
-    public float scaleMultiplier = 0.85f;
-
     [Header("Dialogue Lines")]
     public List<DialogueLine> dialogueLines = new List<DialogueLine>();
 
@@ -100,7 +88,6 @@ public class DialogueBox : MonoBehaviour
     private RectTransform rectTransform;
     private Vector2 visiblePosition;
     private Vector2 hiddenPosition;
-    private Vector3 designScale;
     private bool isAnimating = false;
 
     private void Awake()
@@ -115,7 +102,6 @@ public class DialogueBox : MonoBehaviour
         }
 
         visiblePosition = rectTransform.anchoredPosition;
-        designScale = rectTransform.localScale;
         hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y - hiddenOffset);
 
         if (dialogueText == null)
@@ -317,31 +303,12 @@ public class DialogueBox : MonoBehaviour
         yield return null;
         if (rectTransform == null) yield break;
 
-        if (useForcedRectTransform)
-        {
-            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.sizeDelta = new Vector2(forcedWidth, forcedHeight);
-            rectTransform.localScale = Vector3.one;
-            visiblePosition = new Vector2(forcedPosX, forcedPosY);
-            hiddenPosition = new Vector2(forcedPosX, forcedPosY - hiddenOffset);
-            rectTransform.anchoredPosition = hiddenPosition;
-        }
-        else
-        {
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-            visiblePosition = rectTransform.anchoredPosition;
-            visiblePosition.y += visiblePositionYOffset;
-            hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y - hiddenOffset);
-            rectTransform.anchoredPosition = hiddenPosition;
-            rectTransform.localScale = new Vector3(
-                designScale.x * scaleMultiplier,
-                designScale.y * scaleMultiplier,
-                designScale.z
-            );
-        }
+        // Give the UI a frame to update its layout sizes from any new text
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+
+        // Snap to hidden position and slide up to its true anchored position
+        rectTransform.anchoredPosition = hiddenPosition;
 
         slideAnimationCoroutine = StartCoroutine(SlideUp());
     }

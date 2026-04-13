@@ -63,6 +63,7 @@ public class CutsceneActionDrawer : PropertyDrawer
         }
         else if (typeIndex == (int)CutsceneActionType.CameraShake) 
         {
+            h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("shakeVirtualCamera")) + 2f;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("shakeDuration")) + 2f;
             h += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("shakeMagnitude")) + 2f;
         }
@@ -146,6 +147,7 @@ public class CutsceneActionDrawer : PropertyDrawer
             }
             else if (typeIndex == (int)CutsceneActionType.CameraShake) 
             {
+                DrawProp(ref rect, property.FindPropertyRelative("shakeVirtualCamera"));
                 DrawProp(ref rect, property.FindPropertyRelative("shakeDuration"));
                 DrawProp(ref rect, property.FindPropertyRelative("shakeMagnitude"));
             }

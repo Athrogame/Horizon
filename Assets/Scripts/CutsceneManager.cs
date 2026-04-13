@@ -299,47 +299,137 @@ public class CutsceneManager : MonoBehaviour
 
     private IEnumerator CameraShakeRoutine(float duration, float magnitude, GameObject virtualCamera)
     {
+        Debug.Log($"[CameraShake] Starting shake. Duration: {duration}, Magnitude: {magnitude}, Target Camera: {(virtualCamera != null ? virtualCamera.name : "NULL")}");
+
         if (virtualCamera == null)
         {
-            Debug.LogWarning("CameraShake Failed: No Virtual Camera assigned! Drag your Cinemachine Virtual Camera into the 'Shake Virtual Camera' slot on the CameraShake action.");
+            Debug.LogWarning("[CameraShake] Failed: No Virtual Camera assigned!");
             yield break;
         }
 
-        // Support Cinemachine v2 and v3 (Unity package namespace differs)
+        /* 
+        // WORKAROUND: Find and disable ALL Pixel Perfect Camera components (both VCam and Main Camera)
+        List<Behaviour> pixelPerfectComponents = new List<Behaviour>();
+
+        Behaviour ppVcam1 = virtualCamera.GetComponent("UnityEngine.U2D.PixelPerfectCamera") as Behaviour;
+        if (ppVcam1 != null) pixelPerfectComponents.Add(ppVcam1);
+        Behaviour ppVcam2 = virtualCamera.GetComponent("PixelPerfectCamera") as Behaviour;
+        if (ppVcam2 != null && !pixelPerfectComponents.Contains(ppVcam2)) pixelPerfectComponents.Add(ppVcam2);
+
+        if (Camera.main != null)
+        {
+            Behaviour ppMain1 = Camera.main.GetComponent("UnityEngine.U2D.PixelPerfectCamera") as Behaviour;
+            if (ppMain1 != null && !pixelPerfectComponents.Contains(ppMain1)) pixelPerfectComponents.Add(ppMain1);
+            Behaviour ppMain2 = Camera.main.GetComponent("PixelPerfectCamera") as Behaviour;
+            if (ppMain2 != null && !pixelPerfectComponents.Contains(ppMain2)) pixelPerfectComponents.Add(ppMain2);
+        }
+
+        List<Behaviour> disabledPPs = new List<Behaviour>();
+        foreach (var pp in pixelPerfectComponents)
+        {
+            if (pp != null && pp.enabled)
+            {
+                pp.enabled = false;
+                disabledPPs.Add(pp);
+                Debug.Log($"[CameraShake] WORKAROUND: Temporarily disabled '{pp.GetType().Name}' on '{pp.gameObject.name}'!");
+            }
+        }
+        */
+
+        // Support Cinemachine v2 and v3
         Component noiseComp = virtualCamera.GetComponent("CinemachineBasicMultiChannelPerlin");
         if (noiseComp == null)
             noiseComp = virtualCamera.GetComponent("Unity.Cinemachine.CinemachineBasicMultiChannelPerlin");
 
         if (noiseComp == null)
         {
-            Debug.LogWarning($"CameraShake Failed: '{virtualCamera.name}' has no CinemachineBasicMultiChannelPerlin component. " +
-                             "Select your Virtual Camera and go Add Component > Cinemachine > Noise > Basic Multi Channel Perlin, then assign a noise profile.");
+            Debug.LogWarning($"[CameraShake] Failed: '{virtualCamera.name}' has no CinemachineBasicMultiChannelPerlin component.");
             yield break;
         }
 
-        // v3 exposes a property called AmplitudeGain; v2 uses the serialized field m_AmplitudeGain
-        var ampProp  = noiseComp.GetType().GetProperty("AmplitudeGain");
-        var ampField = noiseComp.GetType().GetField("m_AmplitudeGain");
+        Debug.Log($"[CameraShake] Found Noise Component on '{virtualCamera.name}'! Analyzing...");
 
-        if (ampProp == null && ampField == null)
+        var ampProp = noiseComp.GetType().GetProperty("AmplitudeGain");
+        var ampField = noiseComp.GetType().GetField("AmplitudeGain");
+        var legacyAmpField = noiseComp.GetType().GetField("m_AmplitudeGain");
+
+        var profileField = noiseComp.GetType().GetField("NoiseProfile");
+        var legacyProfileField = noiseComp.GetType().GetField("m_NoiseProfile");
+        var profileLegacy2 = noiseComp.GetType().GetField("m_Definition"); // older versions
+        
+        object profile = null;
+        if (profileField != null) profile = profileField.GetValue(noiseComp);
+        else if (legacyProfileField != null) profile = legacyProfileField.GetValue(noiseComp);
+        else if (profileLegacy2 != null) profile = profileLegacy2.GetValue(noiseComp);
+
+        if (profile == null)
         {
-            Debug.LogWarning("CameraShake Failed: Could not find AmplitudeGain on the noise component.");
+            Debug.LogWarning($"[CameraShake] Failed: The noise component on '{virtualCamera.name}' has no Noise Profile! (It must hold something like '6D Shake').");
+        }
+        else
+        {
+            Debug.Log($"[CameraShake] Verified valid Noise Profile: {profile.ToString()}");
+        }
+
+        if (ampProp == null && ampField == null && legacyAmpField == null)
+        {
+            Debug.LogWarning("[CameraShake] Failed: Could not find AmplitudeGain on the noise component.");
             yield break;
         }
 
-        // Remember the original amplitude so we can restore it cleanly after the shake
-        float originalAmplitude = ampProp != null
-            ? (float)ampProp.GetValue(noiseComp)
-            : (float)ampField.GetValue(noiseComp);
+        var freqProp = noiseComp.GetType().GetProperty("FrequencyGain");
+        var freqField = noiseComp.GetType().GetField("FrequencyGain");
+        var legacyFreqField = noiseComp.GetType().GetField("m_FrequencyGain");
 
-        // Set shake amplitude — Cinemachine reads this every frame, so it works immediately
-        if (ampProp  != null) ampProp.SetValue(noiseComp, magnitude);
-        else                  ampField.SetValue(noiseComp, magnitude);
+        // Remember the original amplitude so we can restore it cleanly
+        float originalAmplitude = 0f;
+        if (ampProp != null) originalAmplitude = (float)ampProp.GetValue(noiseComp);
+        else if (ampField != null) originalAmplitude = (float)ampField.GetValue(noiseComp);
+        else if (legacyAmpField != null) originalAmplitude = (float)legacyAmpField.GetValue(noiseComp);
+
+        float originalFrequency = 1f;
+        if (freqProp != null) originalFrequency = (float)freqProp.GetValue(noiseComp);
+        else if (freqField != null) originalFrequency = (float)freqField.GetValue(noiseComp);
+        else if (legacyFreqField != null) originalFrequency = (float)legacyFreqField.GetValue(noiseComp);
+
+        Debug.Log($"[CameraShake] Original properties -> Amplitude: {originalAmplitude}, Frequency: {originalFrequency}");
+
+        // Set shake amplitude
+        if (ampProp != null) ampProp.SetValue(noiseComp, magnitude);
+        else if (ampField != null) ampField.SetValue(noiseComp, magnitude);
+        else if (legacyAmpField != null) legacyAmpField.SetValue(noiseComp, magnitude);
+
+        // Guarantee a reasonable frequency
+        float runFreq = originalFrequency == 0f ? 1.5f : originalFrequency;
+        if (freqProp != null) freqProp.SetValue(noiseComp, runFreq);
+        else if (freqField != null) freqField.SetValue(noiseComp, runFreq);
+        else if (legacyFreqField != null) legacyFreqField.SetValue(noiseComp, runFreq);
+
+        Debug.Log($"[CameraShake] Set target -> Amplitude: {magnitude}, Frequency: {runFreq}. Waiting {duration}s...");
 
         yield return new WaitForSeconds(duration);
 
+        Debug.Log("[CameraShake] Duration finished! Reverting to original values.");
+
         // Restore the original amplitude when done
-        if (ampProp  != null) ampProp.SetValue(noiseComp, originalAmplitude);
-        else                  ampField.SetValue(noiseComp, originalAmplitude);
+        if (ampProp != null) ampProp.SetValue(noiseComp, originalAmplitude);
+        else if (ampField != null) ampField.SetValue(noiseComp, originalAmplitude);
+        else if (legacyAmpField != null) legacyAmpField.SetValue(noiseComp, originalAmplitude);
+
+        if (freqProp != null) freqProp.SetValue(noiseComp, originalFrequency);
+        else if (freqField != null) freqField.SetValue(noiseComp, originalFrequency);
+        else if (legacyFreqField != null) legacyFreqField.SetValue(noiseComp, originalFrequency);
+
+        /*
+        // WORKAROUND: Turn Pixel Perfect scripts back on!
+        foreach (var pp in disabledPPs)
+        {
+            if (pp != null)
+            {
+                pp.enabled = true;
+                Debug.Log($"[CameraShake] WORKAROUND: Shake finished. Re-enabled Pixel Perfect Camera on {pp.gameObject.name}.");
+            }
+        }
+        */
     }
 }
