@@ -136,6 +136,7 @@ GameObject:
   - component: {fileID: 28709194}
   - component: {fileID: 28709195}
   - component: {fileID: 28709196}
+  - component: {fileID: 28709197}
   m_Layer: 0
   m_Name: Horizon
   m_TagString: Player
@@ -261,8 +262,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a90d72688678f40748581a6c80760d66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  moveSpeed: 3.5
-  acceleration: 20
+  moveSpeed: 3.9
   moveActionReference: {fileID: -1680190386980627800, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   spawnFacingPulseVelocity: 0.25
   movementLocked: 0
@@ -335,7 +335,7 @@ Rigidbody2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_Interpolate: 1
+  m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
@@ -495,6 +495,19 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &28709197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28709187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65b48d2a48b6e468b91bc305f6dedc8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelSnap
+  pixelsPerUnit: 16
 --- !u!1 &75348120
 GameObject:
   m_ObjectHideFlags: 0
@@ -862,8 +875,8 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
-    y: 0
+    x: 1.6960785
+    y: -0.46794873
     width: 1
     height: 1
   near clip plane: 0.3
@@ -950,7 +963,7 @@ MonoBehaviour:
   m_RefResolutionX: 816
   m_RefResolutionY: 624
   m_CropFrame: 3
-  m_GridSnapping: 0
+  m_GridSnapping: 1
   m_FilterMode: 1
   m_UpscaleRT: 0
   m_PixelSnapping: 0
@@ -1187,6 +1200,94 @@ MonoBehaviour:
     shakeMagnitude: 8
     virtualCamera: {fileID: 0}
     cameraFollowTarget: {fileID: 0}
+  - actionType: 0
+    waitToFinish: 1
+    waitDuration: 2
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 1690978909}
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 7400000, guid: 698547fb958e02b4583ba31d4d72d32e, type: 2}
+    targetGameObject: {fileID: 1012446037}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 1399551490}
+    shakeDuration: 0.6
+    shakeMagnitude: 8
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 6
+    waitToFinish: 0
+    waitDuration: 5
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 1690978909}
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 0}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 1399551490}
+    shakeDuration: 0.6
+    shakeMagnitude: 8
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 7
+    waitToFinish: 0
+    waitDuration: 5
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 1690978909}
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 0}
+    targetGameObject: {fileID: 1012446037}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 1399551490}
+    shakeDuration: 0.6
+    shakeMagnitude: 8
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 5
+    waitToFinish: 0
+    waitDuration: 5
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 1690978909}
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
+    dialogueBox: {fileID: 1647079238}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 7400000, guid: 698547fb958e02b4583ba31d4d72d32e, type: 2}
+    targetGameObject: {fileID: 1012446037}
+    setActiveState: 1
+    shakeVirtualCamera: {fileID: 1399551490}
+    shakeDuration: 0.6
+    shakeMagnitude: 8
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
 --- !u!4 &519624008
 Transform:
   m_ObjectHideFlags: 0
@@ -1203,6 +1304,7 @@ Transform:
   - {fileID: 626373360}
   - {fileID: 1080052700}
   - {fileID: 312903732}
+  - {fileID: 1690978909}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &612325678
@@ -2324,7 +2426,7 @@ GameObject:
   - component: {fileID: 1399551496}
   - component: {fileID: 1399551495}
   - component: {fileID: 1399551493}
-  - component: {fileID: 1399551500}
+  - component: {fileID: 1399551502}
   - component: {fileID: 1399551498}
   - component: {fileID: 1399551492}
   - component: {fileID: 1399551497}
@@ -2407,10 +2509,10 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
-    y: 0.009615385
-    width: 1
-    height: 0.9807692
+    x: 2.1629903
+    y: 0
+    width: 0.06535948
+    height: 0.06410257
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -2530,25 +2632,6 @@ MonoBehaviour:
   AmplitudeGain: 0
   FrequencyGain: 0
   m_NoiseOffsets: {x: 0, y: 0, z: 0}
---- !u!114 &1399551500
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1399551490}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b617507da6d07e749b7efdb34e1173e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineFollow
-  TrackerSettings:
-    BindingMode: 4
-    PositionDamping: {x: 1, y: 1, z: 1}
-    AngularDampingMode: 0
-    RotationDamping: {x: 1, y: 1, z: 1}
-    QuaternionDamping: 1
-  FollowOffset: {x: 0, y: 0, z: -10}
 --- !u!114 &1399551501
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2561,6 +2644,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a8a05de0ac134f4f9d01bef6b9da077, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachinePixelPerfect
+--- !u!114 &1399551502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1399551490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886251e9a18ece04ea8e61686c173e1b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachinePositionComposer
+  CameraDistance: 10
+  DeadZoneDepth: 0
+  Composition:
+    ScreenPosition: {x: 0, y: 0}
+    DeadZone:
+      Enabled: 1
+      Size: {x: 0.2, y: 0.2}
+    HardLimits:
+      Enabled: 0
+      Size: {x: 0.8, y: 0.8}
+      Offset: {x: 0, y: 0}
+  CenterOnActivate: 1
+  TargetOffset: {x: 0, y: 0, z: 0}
+  Damping: {x: 0, y: 0, z: 0}
+  Lookahead:
+    Enabled: 0
+    Time: 0
+    Smoothing: 0
+    IgnoreY: 0
 --- !u!1 &1400772617
 GameObject:
   m_ObjectHideFlags: 0
@@ -3251,7 +3365,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0.34, y: 16.51001}
+  m_AnchoredPosition: {x: 0.34, y: 16.5}
   m_SizeDelta: {x: 2463.55, y: 372.18}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1647079238
@@ -3493,6 +3607,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1690978908
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1690978909}
+  m_Layer: 0
+  m_Name: ok
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1690978909
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1690978908}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.96, y: -1.6, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 519624008}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1697980599
 GameObject:
@@ -4311,7 +4456,7 @@ RectTransform:
   m_GameObject: {fileID: 1929111927}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -0.42}
-  m_LocalScale: {x: 0.22, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1003393849}
@@ -4319,8 +4464,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 990.15, y: 426.54}
-  m_SizeDelta: {x: -400.91, y: 44.31}
+  m_AnchoredPosition: {x: 1014.1, y: 415.99997}
+  m_SizeDelta: {x: -2028.28, y: 44.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1929111929
 MonoBehaviour:

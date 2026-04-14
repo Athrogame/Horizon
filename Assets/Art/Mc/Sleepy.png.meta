@@ -143,67 +143,67 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Sleepy_4
+      name: Sleepy_0
       rect:
         serializedVersion: 2
-        x: 9
-        y: 11
+        x: 0
+        y: 0
         width: 32
-        height: 39
+        height: 64
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 72f324e1a0fba2c90800000000000000
-      internalID: -7193727404592709849
+      spriteID: fb2001ef2c0c842f09643fd363d38fab
+      internalID: -7895907517315614382
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Sleepy_6
+      name: Sleepy_1
       rect:
         serializedVersion: 2
-        x: 58
-        y: 12
+        x: 32
+        y: 0
         width: 32
-        height: 38
+        height: 64
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: adb9fdde33cc5f2f0800000000000000
-      internalID: -939620423830627366
+      spriteID: 22dfbaef806dd439d88fad1664e170e6
+      internalID: -7384890987754445692
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Sleepy_8
+      name: Sleepy_2
       rect:
         serializedVersion: 2
-        x: 110
-        y: 11
+        x: 64
+        y: 0
         width: 32
-        height: 39
+        height: 64
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 424d13ea11b41ad80800000000000000
-      internalID: -8241223303802268636
+      spriteID: 276965e3ecd08487889798bc0ab523d5
+      internalID: -4895069094667522916
       vertices: []
       indices: 
       edges: []
@@ -220,19 +220,13 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       Sleepy_0: -7895907517315614382
       Sleepy_1: -7384890987754445692
-      Sleepy_10: -1705795716577288686
       Sleepy_2: -4895069094667522916
-      Sleepy_3: -6055443488679324089
-      Sleepy_4: -7193727404592709849
-      Sleepy_5: -9076375495336389123
-      Sleepy_6: -939620423830627366
-      Sleepy_7: 4674413621774505078
-      Sleepy_8: -8241223303802268636
-      Sleepy_9: 3683292125118757139
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

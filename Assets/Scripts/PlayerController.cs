@@ -3,19 +3,23 @@ using UnityEngine.InputSystem; // New Input System
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(PixelSnap))]  // Enforce pixel-snapping on the same GameObject
 public class PlayerController : MonoBehaviour
 {
     public static PlayerController I { get; private set; }
 
     [Header("Movement")]
     public float moveSpeed = 5f;
-    public float acceleration = 20f;
+    // 'acceleration' removed — instant velocity response is intentional.
+    // Lerp-based acceleration moves the player to non-pixel-aligned positions
+    // every frame, which is the primary cause of sub-pixel jitter.
 
     [Header("Input")]
     public InputActionReference moveActionReference;
 
     private Rigidbody2D rb;
     private Animator animator;
+    private PixelSnap pixelSnap;
     private Vector2 moveInput;
     private InputAction moveAction;
 
@@ -49,13 +53,17 @@ public class PlayerController : MonoBehaviour
         }
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        pixelSnap = GetComponent<PixelSnap>();
 
         // For a top-down controller we don't want gravity pulling the player down
         rb.gravityScale = 0f;
         rb.freezeRotation = true;
 
-        // Smooth position between physics steps so the camera (LateUpdate) doesn't see jitter/teleporting
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        // IMPORTANT: Interpolation is DISABLED on purpose.
+        // Rigidbody interpolation blends positions between physics steps using floats,
+        // which produces sub-pixel positions that the Pixel Perfect Camera cannot correct.
+        // PixelSnap.LateUpdate() handles alignment instead — no interpolation needed.
+        rb.interpolation = RigidbodyInterpolation2D.None;
 
         // Resolve input action from inspector reference.
         if (moveActionReference != null)
@@ -87,26 +95,22 @@ public class PlayerController : MonoBehaviour
         lastMoveX = cardinal.x;
         lastMoveY = cardinal.y;
 
-        // Stop movement / apply a tiny facing impulse, then update animator to that idle pose.
+        // Always stop movement when forcing a facing direction (e.g. spawning from a door).
+        // The old pulse velocity approach applied a fractional velocity that could land the
+        // player on a sub-pixel boundary.  Animator facing is now driven directly from
+        // lastMoveX/Y so no velocity pulse is needed to update the idle direction frame.
         if (rb != null)
-        {
-            if (pulseMove)
-            {
-                // IMPORTANT: animator + IsMoving are driven by actual velocity in FixedUpdate.
-                // So we need a small velocity pulse so the next physics tick updates facing correctly.
-                rb.linearVelocity = cardinal * spawnFacingPulseVelocity;
-            }
-            else
-            {
-                rb.linearVelocity = Vector2.zero;
-            }
-        }
+            rb.linearVelocity = Vector2.zero;
+
+        // Snap to pixel grid after any teleport/warp so the first rendered frame is clean.
+        if (pixelSnap != null)
+            pixelSnap.SnapToPixelGrid();
 
         if (animator != null)
         {
             if (pulseMove)
             {
-                // Briefly mark as moving to ensure the walk animation direction updates
+                // Briefly mark as moving so the walk-direction frame shows before returning to idle.
                 animator.SetBool(IsMoving, true);
                 StartCoroutine(PulseIsMoving(pulseDuration));
             }
@@ -164,32 +168,26 @@ public class PlayerController : MonoBehaviour
 
         Vector2 cardinal = input == Vector2.zero ? Vector2.zero : ToCardinal(input);
 
-        // Target velocity based on cardinal direction
-        Vector2 targetVelocity = cardinal * moveSpeed;
+        // Set velocity directly — no Lerp, no smoothing.
+        // Lerp-based acceleration keeps the player at a fractional velocity
+        // every frame, which maps to a non-integer pixel offset after physics
+        // integrates the position.  Direct velocity means the player moves
+        // exactly (moveSpeed / PPU) pixels per physics step — always grid-aligned.
+        rb.linearVelocity = cardinal * moveSpeed;
 
-        // Tween / smooth toward the target velocity
-        Vector2 currentVelocity = rb.linearVelocity;
-        Vector2 newVelocity = Vector2.Lerp(
-            currentVelocity,
-            targetVelocity,
-            acceleration * Time.fixedDeltaTime
-        );
-
-        rb.linearVelocity = newVelocity;
-
-        // Drive animations from the velocity that physics produced on the previous step.
-        // This keeps animation honest when collisions block movement.
+        // Drive animations from the current cardinal direction.
+        // We read from 'cardinal' (this frame's input) rather than rb.linearVelocity
+        // so animation updates instantly when direction changes, not one frame late.
         if (animator != null)
         {
-            bool isMoving = currentVelocity.sqrMagnitude > MoveDeadzone;
+            bool isMoving = cardinal != Vector2.zero;
 
             if (isMoving)
             {
-                Vector2 facing = ToCardinal(currentVelocity);
-                lastMoveX = facing.x;
-                lastMoveY = facing.y;
+                lastMoveX = cardinal.x;
+                lastMoveY = cardinal.y;
             }
-            // When idle, keep previous direction for correct idle pose.
+            // When idle, keep previous lastMoveX/Y for correct idle facing pose.
 
             animator.SetBool(IsMoving, isMoving);
             animator.SetFloat(MoveX, lastMoveX);
