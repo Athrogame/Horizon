@@ -573,6 +573,11 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 16.081688, y: 1.6320362}
   m_EdgeRadius: 0
+--- !u!4 &183904220 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
+  m_PrefabInstance: {fileID: 6882951305038253554}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &312903731
 GameObject:
   m_ObjectHideFlags: 0
@@ -857,8 +862,8 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: -0.10784314
-    y: -0.115384616
+    x: 0
+    y: 0
     width: 1
     height: 1
   near clip plane: 0.3
@@ -1509,6 +1514,7 @@ Transform:
   - {fileID: 1079324278}
   - {fileID: 1042230715}
   - {fileID: 2102446910}
+  - {fileID: 183904220}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &794182260
@@ -1683,7 +1689,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2590
   m_TargetDisplay: 0
 --- !u!224 &823967764
 RectTransform:
@@ -2402,9 +2408,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
-    width: 0.78431374
-    height: 0.7692308
+    y: 0.009615385
+    width: 1
+    height: 0.9807692
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -3026,8 +3032,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -630, y: 51}
-  m_SizeDelta: {x: 1122.705, y: 145.768}
+  m_AnchoredPosition: {x: -64.41, y: 37}
+  m_SizeDelta: {x: 2116.58, y: 145.77}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1582410122
 MonoBehaviour:
@@ -3245,8 +3251,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: -0.8475, y: 16.509003}
-  m_SizeDelta: {x: 2560.8245, y: 369.5449}
+  m_AnchoredPosition: {x: 0.34, y: 16.51001}
+  m_SizeDelta: {x: 2463.55, y: 372.18}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1647079238
 MonoBehaviour:
@@ -3293,7 +3299,7 @@ MonoBehaviour:
   - text: 'Mom: Hori.... '
     appendToPrevious: 0
     delayBeforeSkipAllowed: 0
-    fontSize: 57
+    fontSize: 75
     customSpeed: 20
     emphasizeLine: 0
     onLineFinished:
@@ -3302,7 +3308,7 @@ MonoBehaviour:
   - text: 'Hori.... '
     appendToPrevious: 1
     delayBeforeSkipAllowed: 0
-    fontSize: 57
+    fontSize: 75
     customSpeed: 20
     emphasizeLine: 0
     onLineFinished:
@@ -3311,7 +3317,7 @@ MonoBehaviour:
   - text: 'Hori! '
     appendToPrevious: 1
     delayBeforeSkipAllowed: 0
-    fontSize: 57
+    fontSize: 75
     customSpeed: 20
     emphasizeLine: 0
     onLineFinished:
@@ -3320,7 +3326,7 @@ MonoBehaviour:
   - text: 'HORIZON! '
     appendToPrevious: 1
     delayBeforeSkipAllowed: 0
-    fontSize: 70
+    fontSize: 84.1
     customSpeed: 7
     emphasizeLine: 1
     onLineFinished:
@@ -3613,7 +3619,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1165, y: -104}
+  m_AnchoredPosition: {x: 1123, y: -101}
   m_SizeDelta: {x: 74.409, y: 73.581}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1728156405
@@ -4313,8 +4319,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 1051, y: 477}
-  m_SizeDelta: {x: -936.7941, y: 0}
+  m_AnchoredPosition: {x: 990.15, y: 426.54}
+  m_SizeDelta: {x: -400.91, y: 44.31}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1929111929
 MonoBehaviour:
@@ -4373,15 +4379,11 @@ MonoBehaviour:
   - gifSource: {fileID: 4130902561586801914, guid: 1bcf473ce8027c6429d1174bf757555a, type: 3}
     loop: 0
   emotionAnimations: []
-  useNormalForcedRect: 1
-  normalPos: {x: 450, y: 325}
-  normalSize: {x: 1, y: 1}
   showDuration: 0.35
   hideDuration: 0.25
   hiddenOffset: 800
-  useFocusForcedRect: 0
-  focusPos: {x: 0, y: 500}
-  focusSize: {x: 1200, y: 260}
+  focusScale: 1.5
+  focusPosOffset: {x: 0, y: 0}
   startFocused: 0
   focusBackground: {fileID: 428646086}
   backgroundTargetAlpha: 0.6
@@ -4698,7 +4700,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 729180470}
     m_Modifications:
     - target: {fileID: 2644893725517531248, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4738,11 +4740,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.70805
+      value: 6.89872
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 3.27323
+      value: 3.58357
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -4754,15 +4756,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6931693634785468683, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -4795,7 +4797,6 @@ SceneRoots:
   - {fileID: 823967764}
   - {fileID: 1817521394}
   - {fileID: 1435107330}
-  - {fileID: 6882951305038253554}
   - {fileID: 729180470}
   - {fileID: 1923585751}
   - {fileID: 1697980601}
