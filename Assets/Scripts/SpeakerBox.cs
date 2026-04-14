@@ -46,15 +46,13 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     public List<GifEmotionAnimation> emotionAnimations = new List<GifEmotionAnimation>();
 
     // -------------------------------------------------------------------------
-    // Normal (unfocused) state
+    // Slide animation
     // -------------------------------------------------------------------------
-    [Header("Normal State")]
-    public bool useNormalForcedRect = true;
-    public Vector2 normalPos = new Vector2(0, 325);
-    public Vector2 normalSize = new Vector2(350, 350);
+    [Header("Animation")]
+    [Tooltip("Duration of the slide-in animation.")]
     public float showDuration = 0.35f;
+    [Tooltip("Duration of the slide-out animation.")]
     public float hideDuration = 0.25f;
-
     [Tooltip("How far below the screen the speaker starts/ends its slide animation.")]
     public float hiddenOffset = 800f;
 
@@ -62,9 +60,10 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // Focus state
     // -------------------------------------------------------------------------
     [Header("Focus State")]
-    public bool useFocusForcedRect = true;
-    public Vector2 focusPos = new Vector2(0, 500);
-    public Vector2 focusSize = new Vector2(600, 600);
+    [Tooltip("Uniform scale applied to the speaker box when focused. 1 = no change.")]
+    public float focusScale = 1.5f;
+    [Tooltip("Optional position offset applied on top of the resting position when focused.")]
+    public Vector2 focusPosOffset = Vector2.zero;
 
     [Tooltip("If true, the speaker enters focus mode automatically when dialogue opens.")]
     public bool startFocused = false;
@@ -94,12 +93,13 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     private bool isFocused;
 
     private Coroutine moveCoroutine;
+    private Coroutine scaleCoroutine;
     private Coroutine bgFadeCoroutine;
     private Coroutine emotionAnimationCoroutine;
 
-    // Saved when entering focus without useNormalForcedRect, so we can restore on exit.
-    private Vector2 cachedNormalPos;
-    private Vector2 cachedNormalSize;
+    // Captured at Awake — the resting anchored position set in the layout.
+    private Vector2 originalPos;
+    private Vector3 originalLocalScale;
 
     private Color bgOriginalColor;
     private object currentEmotionKey;
@@ -152,8 +152,14 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         // Make the portrait stretch to fill speakerRect so it scales with it automatically.
         SetPortraitStretch();
 
-        if (useNormalForcedRect && speakerRect != null)
-            SetSpeakerRect(normalPos, normalSize);
+        // Capture the resting position and scale from the layout — same pattern as DialogueBox.
+        if (speakerRect != null)
+        {
+            originalPos = speakerRect.anchoredPosition;
+            // Park it off-screen; ShowNormal will slide it back up.
+            speakerRect.anchoredPosition = originalPos + new Vector2(0f, -hiddenOffset);
+        }
+        originalLocalScale = transform.localScale;
 
         // Start the focus background hidden.
         if (focusBackground != null)
@@ -190,7 +196,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // Show / Hide — called by DialogueBox
     // -------------------------------------------------------------------------
 
-    // Slides the speaker in from below. If startFocused, goes straight to focus size.
+    // Slides the speaker in from below to its baked resting position.
     public void ShowNormal()
     {
         if (speakerRect == null) return;
@@ -202,19 +208,21 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         // Apply emotion immediately so the correct portrait shows on the first frame.
         SetEmotionForLine(0);
 
+        Vector2 hiddenPos = originalPos + new Vector2(0f, -hiddenOffset);
+        speakerRect.anchoredPosition = hiddenPos;
+        transform.localScale = originalLocalScale;
+
         if (startFocused)
         {
-            Vector2 hiddenPos = focusPos + new Vector2(0f, -hiddenOffset);
-            StartMove(hiddenPos, focusPos, focusSize, showDuration);
+            Vector2 focusedPos = originalPos + focusPosOffset;
+            StartMove(hiddenPos, focusedPos, showDuration);
+            AnimateScale(originalLocalScale, originalLocalScale * focusScale, showDuration);
             isFocused = true;
             FadeBackgroundIn();
         }
         else
         {
-            Vector2 targetPos = useNormalForcedRect ? normalPos : speakerRect.anchoredPosition;
-            Vector2 size      = useNormalForcedRect ? normalSize : speakerRect.sizeDelta;
-            Vector2 hiddenPos = targetPos + new Vector2(0f, -hiddenOffset);
-            StartMove(hiddenPos, targetPos, size, showDuration);
+            StartMove(hiddenPos, originalPos, showDuration);
         }
     }
 
@@ -229,7 +237,12 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
         Vector2 startPos = speakerRect.anchoredPosition;
         Vector2 endPos   = startPos + new Vector2(0f, -hiddenOffset);
-        StartMove(startPos, endPos, speakerRect.sizeDelta, hideDuration, () => gameObject.SetActive(false));
+        StartMove(startPos, endPos, hideDuration, () =>
+        {
+            transform.localScale = originalLocalScale;
+            gameObject.SetActive(false);
+        });
+        AnimateScale(transform.localScale, originalLocalScale, hideDuration);
 
         FadeBackgroundOut();
     }
@@ -247,13 +260,12 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
     public void EnterFocus()
     {
-        if (!useFocusForcedRect || speakerRect == null) return;
+        if (speakerRect == null) return;
 
         isFocused = true;
-        cachedNormalPos  = speakerRect.anchoredPosition;
-        cachedNormalSize = speakerRect.sizeDelta;
-
-        StartMove(cachedNormalPos, focusPos, focusSize, showDuration);
+        Vector2 focusedPos = originalPos + focusPosOffset;
+        StartMove(speakerRect.anchoredPosition, focusedPos, showDuration);
+        AnimateScale(transform.localScale, originalLocalScale * focusScale, showDuration);
         FadeBackgroundIn();
     }
 
@@ -262,12 +274,8 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (speakerRect == null) return;
 
         isFocused = false;
-
-        Vector2 fromPos = speakerRect.anchoredPosition;
-        Vector2 toPos   = useNormalForcedRect ? normalPos  : cachedNormalPos;
-        Vector2 toSize  = useNormalForcedRect ? normalSize : cachedNormalSize;
-
-        StartMove(fromPos, toPos, toSize, showDuration);
+        StartMove(speakerRect.anchoredPosition, originalPos, showDuration);
+        AnimateScale(transform.localScale, originalLocalScale, showDuration);
         FadeBackgroundOut();
     }
 
@@ -476,46 +484,54 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // Movement helpers
     // -------------------------------------------------------------------------
 
-    private void StartMove(Vector2 from, Vector2 to, Vector2 size, float duration, System.Action onComplete = null)
+    private void StartMove(Vector2 from, Vector2 to, float duration, System.Action onComplete = null)
     {
         if (moveCoroutine != null) StopCoroutine(moveCoroutine);
-        moveCoroutine = StartCoroutine(SlideSpeaker(from, to, size, duration, onComplete));
+        moveCoroutine = StartCoroutine(SlideSpeaker(from, to, duration, onComplete));
     }
 
-    // Slides speakerRect from one position to another with an ease-out curve.
-    // Sets the target size immediately so the portrait (stretch child) resizes from the start.
-    private IEnumerator SlideSpeaker(Vector2 from, Vector2 to, Vector2 size, float duration, System.Action onComplete = null)
+    // Slides speakerRect from one position to another with an ease-out cubic curve.
+    private IEnumerator SlideSpeaker(Vector2 from, Vector2 to, float duration, System.Action onComplete = null)
     {
         duration = Mathf.Max(0.01f, duration);
-
-        if ((useNormalForcedRect || useFocusForcedRect) && speakerRect != null)
-            speakerRect.sizeDelta = size;
 
         float t = 0f;
         while (t < duration)
         {
             t += Time.deltaTime;
-            float lerp = 1f - Mathf.Pow(1f - (t / duration), 3f); // ease-out cubic
+            float lerp = 1f - Mathf.Pow(1f - Mathf.Clamp01(t / duration), 3f);
             if (speakerRect != null)
                 speakerRect.anchoredPosition = Vector2.Lerp(from, to, lerp);
             yield return null;
         }
 
         if (speakerRect != null)
-        {
             speakerRect.anchoredPosition = to;
-            if (useNormalForcedRect || useFocusForcedRect)
-                speakerRect.sizeDelta = size;
-        }
 
         onComplete?.Invoke();
     }
 
-    private void SetSpeakerRect(Vector2 pos, Vector2 size)
+    private void AnimateScale(Vector3 from, Vector3 to, float duration)
     {
-        if (speakerRect == null) return;
-        speakerRect.anchoredPosition = pos;
-        speakerRect.sizeDelta = size;
+        if (scaleCoroutine != null) StopCoroutine(scaleCoroutine);
+        scaleCoroutine = StartCoroutine(ScaleSpeaker(from, to, duration));
+    }
+
+    // Smoothly scales the speaker's localScale with the same ease-out cubic.
+    private IEnumerator ScaleSpeaker(Vector3 from, Vector3 to, float duration)
+    {
+        duration = Mathf.Max(0.01f, duration);
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float lerp = 1f - Mathf.Pow(1f - Mathf.Clamp01(t / duration), 3f);
+            transform.localScale = Vector3.Lerp(from, to, lerp);
+            yield return null;
+        }
+
+        transform.localScale = to;
     }
 
     // -------------------------------------------------------------------------
