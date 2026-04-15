@@ -43,8 +43,8 @@ PlayerSettings:
   - logo: {fileID: -7050993540882883828, guid: 2e8468939289f442c9377fcd0fb00097, type: 3}
     duration: 2
   m_VirtualRealitySplashScreen: {fileID: 0}
-  defaultScreenWidth: 816
-  defaultScreenHeight: 624
+  defaultScreenWidth: 640
+  defaultScreenHeight: 480
   defaultScreenWidthWeb: 816
   defaultScreenHeightWeb: 624
   m_StereoRenderingPath: 0
@@ -109,7 +109,7 @@ PlayerSettings:
   xboxEnableFitness: 0
   visibleInBackground: 1
   allowFullscreenSwitch: 1
-  fullscreenMode: 0
+  fullscreenMode: 3
   xboxSpeechDB: 0
   xboxEnableHeadOrientation: 0
   xboxEnableGuest: 0
