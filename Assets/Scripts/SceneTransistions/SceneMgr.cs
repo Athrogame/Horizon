@@ -15,6 +15,10 @@ public class SceneMgr : MonoBehaviour
     public Animator transitionAnim;
     [Tooltip("Time to wait for the fade-to-black before loading the scene (should match your 'end' clip length).")]
     public float fadeOutDuration = 0.25f;
+    [Tooltip("How long to hold on black AFTER the scene loads, before fading in. Increase this to hide the player spawning.")]
+    public float holdDuration = 0.1f;
+    [Tooltip("How long the fade-in from black takes.")]
+    public float fadeInDuration = 0.5f;
 
     // Panel.controller convention:
     // - trigger "end" => fade to black
@@ -64,8 +68,12 @@ public class SceneMgr : MonoBehaviour
         yield return new WaitForSecondsRealtime(fadeOutDuration);
 
         DoLoadScene(sceneIndex);
-        yield return new WaitForSeconds(FadeInSpeed);
-        // Fade back out (panel goes from black to transparent)
+
+        // Hold on black so the player spawns & repositions before anything is visible.
+        yield return new WaitForSecondsRealtime(holdDuration);
+
+        // Fade back in — play from the beginning at a speed scaled to fadeInDuration.
+        // Speed = 1 means the clip plays at its authored length; scale accordingly.
         transitionAnim.Play("New Animation", 0, 0f);
     }
 

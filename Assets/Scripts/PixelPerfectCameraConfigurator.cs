@@ -59,4 +59,15 @@ public class PixelPerfectCameraConfigurator : MonoBehaviour
                 Debug.LogWarning($"[Resolution] '{vcam.name}' is missing the CinemachinePixelPerfect extension. Add it manually in the Inspector.");
         }
     }
+    public float pixelsPerUnit = 32;
+    void LateUpdate()
+    {
+        float unitsPerPixel = 1f / pixelsPerUnit;
+
+        Vector3 pos = transform.position;
+        pos.x = Mathf.Round(pos.x / unitsPerPixel) * unitsPerPixel;
+        pos.y = Mathf.Round(pos.y / unitsPerPixel) * unitsPerPixel;
+
+        transform.position = pos;
+    }
 }

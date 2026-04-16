@@ -54,20 +54,8 @@ public class ShowDialogueOnKey : MonoBehaviour
 
     void Update()
     {
-        var keyboard = Keyboard.current;
-        if (keyboard == null) return;
-
-        bool pressed = false;
-        if (interactAction == null || interactAction.action == null)
-            pressed = keyboard[triggerKeyInput].wasPressedThisFrame;
-
-        if (pressed)
-        {
-            if (dialogueBox == null)
-                dialogueBox = FindObjectOfType<DialogueBox>(true);
-            if (dialogueBox != null && !dialogueBox.IsDialogueActive())
-                dialogueBox.StartDialogue();
-        }
+        // Keyboard fallback removed — dialogue is only triggered via an assigned
+        // InputActionReference (interactAction) or an explicit script call.
     }
 
     private void OnInteract(InputAction.CallbackContext ctx)

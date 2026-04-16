@@ -84,6 +84,10 @@ public class DialogueBox : MonoBehaviour
     private Coroutine slideAnimationCoroutine;
     private InputAction advanceInput;
 
+    // Guard so multiple ShowDialogue calls in one cutscene don't stack extra locks.
+    // DialogueBox should only ever hold one movement lock at a time.
+    private bool _hasMovementLock = false;
+
     // Panel layout
     private RectTransform rectTransform;
     private Vector2 visiblePosition;
@@ -194,9 +198,10 @@ public class DialogueBox : MonoBehaviour
         if (dialogueText != null)
             dialogueText.text = "";
 
-        if (PlayerController.I != null)
+        if (PlayerController.I != null && !_hasMovementLock)
         {
-            PlayerController.I.movementLocked = true;
+            PlayerController.I.LockMovement();
+            _hasMovementLock = true;
             if (forcePlayerIdle) PlayerController.I.ForceIdle();
         }
 
@@ -245,8 +250,11 @@ public class DialogueBox : MonoBehaviour
         if (continueIndicator != null)
             continueIndicator.SetActive(false);
 
-        if (PlayerController.I != null)
-            PlayerController.I.movementLocked = false;
+        if (PlayerController.I != null && _hasMovementLock)
+        {
+            PlayerController.I.UnlockMovement();
+            _hasMovementLock = false;
+        }
 
         // Tell speaker to slide out
         SpeakerHide();

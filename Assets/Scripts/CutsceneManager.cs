@@ -55,7 +55,7 @@ public class CutsceneManager : MonoBehaviour
         // 1. Lock the player's movement while the cutscene has taken control
         if (PlayerController.I != null)
         {
-            PlayerController.I.movementLocked = true;
+            PlayerController.I.LockMovement();
             PlayerController.I.ForceIdle();
         }
 
@@ -241,7 +241,7 @@ public class CutsceneManager : MonoBehaviour
         // 3. The cutscene is over, yield control back to the player!
         if (PlayerController.I != null)
         {
-            PlayerController.I.movementLocked = false;
+            PlayerController.I.UnlockMovement();
         }
     }
 
