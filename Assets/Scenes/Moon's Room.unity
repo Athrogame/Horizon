@@ -944,7 +944,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 7.125
+  orthographic size: 7.71875
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -2244,7 +2244,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResolutionManager
   config: {fileID: 11400000, guid: 8fdfeb19711be46e7980b146a27d8d53, type: 2}
-  logScalingEvents: 1
 --- !u!4 &1027614524
 Transform:
   m_ObjectHideFlags: 0

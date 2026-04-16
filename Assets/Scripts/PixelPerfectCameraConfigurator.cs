@@ -32,11 +32,8 @@ public class PixelPerfectCameraConfigurator : MonoBehaviour
         ppc.refResolutionX = 640;
         ppc.refResolutionY = 480;
         ppc.assetsPPU      = 32;
-        ppc.upscaleRT      = false;  // viewport-based letterboxing, not RT upscaling
-        ppc.pixelSnapping  = true;   // snap world objects to pixel grid
-        ppc.cropFrameX     = true;   // black pad on left/right if needed
-        ppc.cropFrameY     = true;   // black pad on top/bottom if needed
-        ppc.stretchFill    = false;  // absolutely never stretch — most critical setting
+        ppc.gridSnapping   = PixelPerfectCamera.GridSnapping.PixelSnapping;
+        ppc.cropFrame      = PixelPerfectCamera.CropFrame.Windowbox;
     }
 
     // Set the camera clear colour to pure black so letterbox bars are black,
@@ -52,7 +49,7 @@ public class PixelPerfectCameraConfigurator : MonoBehaviour
     // CinemachinePixelPerfect extension. That extension must be added manually via the Inspector.
     private void CheckCinemachineExtensions()
     {
-        var vcams = FindObjectsByType<CinemachineCamera>(FindObjectsSortMode.None);
+        var vcams = FindObjectsByType<CinemachineCamera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         foreach (var vcam in vcams)
         {
             if (vcam.GetComponent<CinemachinePixelPerfect>() == null)

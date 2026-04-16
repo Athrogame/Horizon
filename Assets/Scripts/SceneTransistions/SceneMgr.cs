@@ -84,7 +84,7 @@ public class SceneMgr : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        var spawnPoints = FindFirstObjectByType<DoorSpawnPoints>();
+        var spawnPoints = Object.FindAnyObjectByType<DoorSpawnPoints>();
         if (spawnPoints == null || PlayerController.I == null || spawnPoints.SpawnLocations.Count == 0)
             return;
 

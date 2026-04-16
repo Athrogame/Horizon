@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.InputSystem;using UnityEngine.InputSystem;
+using UnityEngine.InputSystem;
 
 [System.Serializable]
 public class DialogueLine
@@ -92,7 +92,6 @@ public class DialogueBox : MonoBehaviour
     private RectTransform rectTransform;
     private Vector2 visiblePosition;
     private Vector2 hiddenPosition;
-    private bool isAnimating = false;
 
     private void Awake()
     {
@@ -139,7 +138,12 @@ public class DialogueBox : MonoBehaviour
 
     private void OnEnable()
     {
-        advanceInput?.Enable();
+        if (advanceInput != null)
+        {
+            advanceInput.started += OnAdvanceInput;
+            if (advanceAction == null)
+                advanceInput.Enable(); // Only enable actions we own; shared asset actions are managed externally.
+        }
 
         // If something manually turns this Game Object on without passing lines, we auto-play the inspector lines.
         if (playOnEnable && dialogueQueue != null && dialogueQueue.Count == 0)
@@ -150,25 +154,27 @@ public class DialogueBox : MonoBehaviour
 
     private void OnDisable()
     {
-        advanceInput?.Disable();
+        if (advanceInput != null)
+        {
+            advanceInput.started -= OnAdvanceInput;
+            // Only disable actions we own (no assigned reference) — never disable shared asset actions globally.
+            if (advanceAction == null)
+                advanceInput.Disable();
+        }
+    }
+
+    private void OnAdvanceInput(InputAction.CallbackContext ctx)
+    {
+        if (Time.time < skipAllowedTime) return;
+
+        if (isDisplayingText)
+            isFastForwarding = true;
+        else if (canAdvance)
+            AdvanceDialogue();
     }
 
     private void Update()
     {
-        if (advanceInput != null && advanceInput.WasPressedThisFrame())
-        {
-            if (Time.time < skipAllowedTime) return; // Prevent skipping/advancing during the unskippable delay
-
-            if (isDisplayingText)
-            {
-                isFastForwarding = true;
-            }
-            else if (canAdvance)
-            {
-                AdvanceDialogue();
-            }
-        }
-        
         UpdateVertexAnimation();
     }
 
@@ -441,7 +447,7 @@ public class DialogueBox : MonoBehaviour
     {
         if (rectTransform == null) yield break;
 
-        isAnimating = true;
+
         float elapsed = 0f;
         Vector2 startPos = hiddenPosition;
         Vector2 endPos = visiblePosition;
@@ -457,7 +463,7 @@ public class DialogueBox : MonoBehaviour
         }
 
         rectTransform.anchoredPosition = endPos;
-        isAnimating = false;
+
 
         StartDisplayingText();
     }
@@ -530,7 +536,7 @@ public class DialogueBox : MonoBehaviour
         Vector2 endPos = hiddenPosition;
 
         float duration = Mathf.Max(0.01f, slideDownDuration);
-        isAnimating = true;
+
         float elapsed = 0f;
 
         while (elapsed < duration)
@@ -544,7 +550,7 @@ public class DialogueBox : MonoBehaviour
         }
 
         rectTransform.anchoredPosition = endPos;
-        isAnimating = false;
+
         yield return new WaitForSeconds(closeDelay);
 
         if (continueIndicator != null)

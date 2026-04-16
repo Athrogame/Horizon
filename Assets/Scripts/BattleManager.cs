@@ -23,8 +23,7 @@ public class BattleManager : MonoBehaviour
     void Update()
     {
         if(UnityEngine.InputSystem.Keyboard.current.qKey.wasPressedThisFrame){
-            Debug.Log("Q pressed");
-            BattleCanvas.SetActive(!BattleCanvas.activeSelf);
+BattleCanvas.SetActive(!BattleCanvas.activeSelf);
         }
         
     }

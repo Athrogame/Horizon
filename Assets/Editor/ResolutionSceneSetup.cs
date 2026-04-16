@@ -135,8 +135,7 @@ public static class ResolutionSceneSetup
         SceneManager.MoveGameObjectToScene(go, scene);
 
         var rm = go.AddComponent<ResolutionManager>();
-        rm.config           = config;
-        rm.logScalingEvents = true;
+        rm.config = config;
 
         Debug.Log($"[Resolution] Added ResolutionManager to '{scene.name}'.");
         return true;

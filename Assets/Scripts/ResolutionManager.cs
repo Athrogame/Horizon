@@ -20,9 +20,6 @@ public class ResolutionManager : MonoBehaviour
     [Tooltip("ScriptableObject containing base resolution and scale settings. Assign in Inspector.")]
     public ResolutionConfig config;
 
-    [Tooltip("Log scale change events to the console.")]
-    public bool logScalingEvents = true;
-
     // The integer multiplier currently applied in windowed mode (stored so it survives a
     // temporary switch to fullscreen and is restored when the player exits fullscreen).
     private int currentWindowScale = 1;
@@ -106,7 +103,7 @@ public class ResolutionManager : MonoBehaviour
     public void RefreshCameraCache()
     {
         // FindObjectsByType is the non-deprecated Unity 6 replacement for FindObjectsOfType.
-        managedCameras = FindObjectsByType<Camera>(FindObjectsSortMode.None);
+        managedCameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
     }
 
     // -------------------------------------------------------------------------
@@ -146,12 +143,6 @@ public class ResolutionManager : MonoBehaviour
             scale++;
         }
 
-        if (logScalingEvents)
-            Debug.Log($"[Resolution] Physical: {physicalW}x{physicalH} | " +
-                      $"DPI: {Screen.dpi} ({dpiScale:F2}x) | " +
-                      $"Logical: {logicalW}x{logicalH} | " +
-                      $"Best integer fit: x{scale} ({config.baseWidth * scale}x{config.baseHeight * scale})");
-
         return scale;
     }
 
@@ -176,9 +167,6 @@ public class ResolutionManager : MonoBehaviour
         // to make sure the new dimensions have been applied.
         Screen.SetResolution(w, h, FullScreenMode.Windowed);
         StartCoroutine(ResetViewportsNextFrame());
-
-        if (logScalingEvents)
-            Debug.Log($"[Resolution] Windowed x{scale}: {w}x{h}");
     }
 
     // Enter borderless fullscreen (FullScreenWindow), then calculate and apply
@@ -198,9 +186,6 @@ public class ResolutionManager : MonoBehaviour
 
         // Viewport must be applied after the resolution change settles (async).
         StartCoroutine(ApplyFullscreenViewportNextFrame());
-
-        if (logScalingEvents)
-            Debug.Log("[Resolution] Entering fullscreen...");
     }
 
     // Toggle between fullscreen and windowed. Windowed restores the last used scale.
@@ -260,9 +245,5 @@ public class ResolutionManager : MonoBehaviour
         foreach (Camera cam in managedCameras)
             cam.rect = viewport;
 
-        if (logScalingEvents)
-            Debug.Log($"[Resolution] Fullscreen x{scale}: game area {gameW}x{gameH} | " +
-                      $"Black bars L/R={Mathf.RoundToInt((screenW - gameW) / 2f)}px " +
-                      $"T/B={Mathf.RoundToInt((screenH - gameH) / 2f)}px");
     }
 }

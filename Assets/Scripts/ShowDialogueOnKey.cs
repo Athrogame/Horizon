@@ -25,7 +25,7 @@ public class ShowDialogueOnKey : MonoBehaviour
         if (dialogueBox == null)
         {
             // Include inactive so we find the DialogueBox even when it starts hidden
-            dialogueBox = FindObjectOfType<DialogueBox>(true);
+            dialogueBox = Object.FindAnyObjectByType<DialogueBox>(FindObjectsInactive.Include);
             if (dialogueBox == null)
             {
                 Debug.LogWarning("ShowDialogueOnKey: No DialogueBox found in scene. Assign one in the inspector.");
@@ -48,7 +48,7 @@ public class ShowDialogueOnKey : MonoBehaviour
         if (interactAction != null && interactAction.action != null)
         {
             interactAction.action.started -= OnInteract;
-            interactAction.action.Disable();
+            // Do NOT call Disable() on a shared asset action — it would disable it globally for all listeners.
         }
     }
 
@@ -61,7 +61,7 @@ public class ShowDialogueOnKey : MonoBehaviour
     private void OnInteract(InputAction.CallbackContext ctx)
     {
         if (dialogueBox == null)
-            dialogueBox = FindObjectOfType<DialogueBox>(true);
+            dialogueBox = Object.FindAnyObjectByType<DialogueBox>(FindObjectsInactive.Include);
         if (dialogueBox == null)
         {
             Debug.LogWarning("ShowDialogueOnKey: No DialogueBox in scene. Add a UI with DialogueBox component.");

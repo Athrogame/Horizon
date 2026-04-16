@@ -138,7 +138,7 @@ public class CutsceneManager : MonoBehaviour
                     // Automatically find the DialogueBox if the developer forgot to manually drag it into the inspector slot
                     if (dBox == null)
                     {
-                        dBox = FindObjectOfType<DialogueBox>(true);
+                        dBox = Object.FindAnyObjectByType<DialogueBox>(FindObjectsInactive.Include);
                     }
 
                     if (dBox != null)
@@ -334,8 +334,6 @@ public class CutsceneManager : MonoBehaviour
 
     private IEnumerator CameraShakeRoutine(float duration, float magnitude, GameObject virtualCamera)
     {
-        Debug.Log($"[CameraShake] Starting shake. Duration: {duration}, Magnitude: {magnitude}, Target Camera: {(virtualCamera != null ? virtualCamera.name : "NULL")}");
-
         if (virtualCamera == null)
         {
             Debug.LogWarning("[CameraShake] Failed: No Virtual Camera assigned!");
@@ -382,8 +380,6 @@ public class CutsceneManager : MonoBehaviour
             yield break;
         }
 
-        Debug.Log($"[CameraShake] Found Noise Component on '{virtualCamera.name}'! Analyzing...");
-
         var ampProp = noiseComp.GetType().GetProperty("AmplitudeGain");
         var ampField = noiseComp.GetType().GetField("AmplitudeGain");
         var legacyAmpField = noiseComp.GetType().GetField("m_AmplitudeGain");
@@ -401,11 +397,6 @@ public class CutsceneManager : MonoBehaviour
         {
             Debug.LogWarning($"[CameraShake] Failed: The noise component on '{virtualCamera.name}' has no Noise Profile! (It must hold something like '6D Shake').");
         }
-        else
-        {
-            Debug.Log($"[CameraShake] Verified valid Noise Profile: {profile.ToString()}");
-        }
-
         if (ampProp == null && ampField == null && legacyAmpField == null)
         {
             Debug.LogWarning("[CameraShake] Failed: Could not find AmplitudeGain on the noise component.");
@@ -427,8 +418,6 @@ public class CutsceneManager : MonoBehaviour
         else if (freqField != null) originalFrequency = (float)freqField.GetValue(noiseComp);
         else if (legacyFreqField != null) originalFrequency = (float)legacyFreqField.GetValue(noiseComp);
 
-        Debug.Log($"[CameraShake] Original properties -> Amplitude: {originalAmplitude}, Frequency: {originalFrequency}");
-
         // Set shake amplitude
         if (ampProp != null) ampProp.SetValue(noiseComp, magnitude);
         else if (ampField != null) ampField.SetValue(noiseComp, magnitude);
@@ -440,11 +429,7 @@ public class CutsceneManager : MonoBehaviour
         else if (freqField != null) freqField.SetValue(noiseComp, runFreq);
         else if (legacyFreqField != null) legacyFreqField.SetValue(noiseComp, runFreq);
 
-        Debug.Log($"[CameraShake] Set target -> Amplitude: {magnitude}, Frequency: {runFreq}. Waiting {duration}s...");
-
         yield return new WaitForSeconds(duration);
-
-        Debug.Log("[CameraShake] Duration finished! Reverting to original values.");
 
         // Restore the original amplitude when done
         if (ampProp != null) ampProp.SetValue(noiseComp, originalAmplitude);
