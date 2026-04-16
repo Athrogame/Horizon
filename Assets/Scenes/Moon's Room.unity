@@ -1075,6 +1075,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CutsceneManager
   playOnStart: 1
   playOnEnable: 0
+  playOnlyOnce: 1
+  cutsceneID: Beginning
   cutsceneActions:
   - actionType: 6
     waitToFinish: 0

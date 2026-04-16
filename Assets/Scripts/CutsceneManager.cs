@@ -10,6 +10,12 @@ public class CutsceneManager : MonoBehaviour
     [Tooltip("If checked, plays automatically when the GameObject is turned from Inactive to Active")]
     public bool playOnEnable = false;
 
+    [Tooltip("If checked, this cutscene will never play more than once — even if you leave and re-enter the room")]
+    public bool playOnlyOnce = false;
+
+    [Tooltip("A unique ID used to remember if this cutscene has already played. MUST be unique across all scenes! (e.g. 'Scene1_IntroCutscene')")]
+    public string cutsceneID = "";
+
     [Tooltip("Add actions to this list to build your cutscene top-to-bottom!")]
     public List<CutsceneAction> cutsceneActions = new List<CutsceneAction>();
 
@@ -43,11 +49,33 @@ public class CutsceneManager : MonoBehaviour
     /// </summary>
     public void StartCutscene()
     {
+        if (playOnlyOnce)
+        {
+            if (string.IsNullOrEmpty(cutsceneID))
+            {
+                Debug.LogWarning($"[CutsceneManager] '{gameObject.name}' has 'Play Only Once' checked but no Cutscene ID set! The cutscene will always replay. Please set a unique Cutscene ID in the Inspector.");
+            }
+            else if (PlayerPrefs.GetInt(cutsceneID, 0) == 1)
+            {
+                // Already played before — skip it entirely
+                return;
+            }
+        }
+
         if (activeRoutine != null)
         {
             StopCoroutine(activeRoutine);
         }
         activeRoutine = StartCoroutine(PlayCutsceneRoutine());
+    }
+
+    /// <summary>
+    /// Resets this cutscene so it can play again (clears the PlayerPrefs flag).
+    /// </summary>
+    public void ResetCutscene()
+    {
+        if (!string.IsNullOrEmpty(cutsceneID))
+            PlayerPrefs.DeleteKey(cutsceneID);
     }
 
     private IEnumerator PlayCutsceneRoutine()
@@ -242,6 +270,13 @@ public class CutsceneManager : MonoBehaviour
         if (PlayerController.I != null)
         {
             PlayerController.I.UnlockMovement();
+        }
+
+        // 4. If this cutscene should only play once, save that it has been seen
+        if (playOnlyOnce && !string.IsNullOrEmpty(cutsceneID))
+        {
+            PlayerPrefs.SetInt(cutsceneID, 1);
+            PlayerPrefs.Save();
         }
     }
 
