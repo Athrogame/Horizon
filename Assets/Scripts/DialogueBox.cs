@@ -22,6 +22,10 @@ public class DialogueLine
     public bool emphasizeLine = false;
     [Tooltip("Event triggered exactly when this line finishes and the player advances to the next one.")]
     public UnityEngine.Events.UnityEvent onLineFinished;
+    [Tooltip("If checked, a question box appears after this line is read.")]
+    public bool showQuestionAfterLine = false;
+    [Tooltip("Question to show after this line. Only used if showQuestionAfterLine is true.")]
+    public QuestionData question = new QuestionData();
 
     public DialogueLine() {}
     public DialogueLine(string text)
@@ -72,6 +76,10 @@ public class DialogueBox : MonoBehaviour
     [Header("Speaker Controller (new script)")]
     [Tooltip("Drag the GameObject that has SpeakerBox on it here.")]
     public MonoBehaviour speakerBoxController; // SpeakerBox component (runtime-called)
+
+    [Header("Question Box (Optional)")]
+    [Tooltip("Drag the GameObject that has QuestionBox on it here.")]
+    public MonoBehaviour questionBoxController;
 
     private List<DialogueLine> dialogueQueue = new List<DialogueLine>();
     private int currentDialogueIndex = 0;
@@ -175,6 +183,13 @@ public class DialogueBox : MonoBehaviour
 
     private void Update()
     {
+        // If dialogue is active and something else force-unlocked movement, re-lock immediately.
+        if (IsDialogueActive() && PlayerController.I != null && !PlayerController.I.movementLocked)
+        {
+            PlayerController.I.LockMovement();
+            _hasMovementLock = true;
+        }
+
         UpdateVertexAnimation();
     }
 
@@ -440,7 +455,53 @@ public class DialogueBox : MonoBehaviour
             dialogueQueue[finishedIndex].onLineFinished?.Invoke();
         }
 
+        // If this line has a question attached, show it before continuing
+        if (finishedIndex < dialogueQueue.Count &&
+            dialogueQueue[finishedIndex].showQuestionAfterLine &&
+            questionBoxController != null)
+        {
+            StartCoroutine(ShowQuestionRoutine(dialogueQueue[finishedIndex].question));
+            return;
+        }
+
         StartDisplayingText();
+    }
+
+    private IEnumerator ShowQuestionRoutine(QuestionData question)
+    {
+        // Detach advance input so it can't fire while the question is open
+        advanceInput.started -= OnAdvanceInput;
+
+        // Remember if the speaker was visible BEFORE hiding it so we know whether to restore it after.
+        bool speakerWasActive = speakerBoxController != null && speakerBoxController.gameObject.activeSelf;
+
+        SpeakerHide();
+        var showMethod = questionBoxController.GetType().GetMethod("ShowQuestion");
+        showMethod?.Invoke(questionBoxController, new object[] { question });
+
+        // Poll until the question box signals it is answered (IsActive returns false)
+        var isActiveMethod = questionBoxController.GetType().GetMethod("IsActive");
+        while (isActiveMethod != null && (bool)isActiveMethod.Invoke(questionBoxController, null))
+            yield return null;
+
+        // Re-attach advance input
+        advanceInput.started += OnAdvanceInput;
+
+        // If more lines remain, continue; otherwise close
+        if (currentDialogueIndex < dialogueQueue.Count)
+        {
+            // Only restore the speaker portrait if it was showing before the question
+            if (speakerWasActive)
+            {
+                SpeakerShowNormal();
+                SpeakerSetEmotionForLine(currentDialogueIndex);
+            }
+            StartDisplayingText();
+        }
+        else
+        {
+            CloseDialogue();
+        }
     }
 
     private IEnumerator SlideUp()

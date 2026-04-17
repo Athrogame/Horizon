@@ -266,10 +266,11 @@ public class CutsceneManager : MonoBehaviour
             }
         }
 
-        // 3. The cutscene is over, yield control back to the player!
+        // 3. The cutscene is over — force the lock count to zero so movement is always restored
+        // regardless of any unbalanced locks from dialogue or other actions mid-cutscene.
         if (PlayerController.I != null)
         {
-            PlayerController.I.UnlockMovement();
+            PlayerController.I.ForceUnlockMovement();
         }
 
         // 4. If this cutscene should only play once, save that it has been seen

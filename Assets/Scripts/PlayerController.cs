@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
 {
     public static PlayerController I { get; private set; }
 
+    public Vector2 FacingDirection => new Vector2(lastMoveX, lastMoveY);
+
     [Header("Movement")]
     public float moveSpeed = 5f;
     // 'acceleration' removed — instant velocity response is intentional.
@@ -51,8 +53,9 @@ public class PlayerController : MonoBehaviour
 
     // Legacy direct set — kept so existing Inspector references don't break.
     // Prefer LockMovement / UnlockMovement from scripts.
-    public void LockMovement()   => _movementLockCount++;
-    public void UnlockMovement() => _movementLockCount = Mathf.Max(0, _movementLockCount - 1);
+    public void LockMovement()        => _movementLockCount++;
+    public void UnlockMovement()      => _movementLockCount = Mathf.Max(0, _movementLockCount - 1);
+    public void ForceUnlockMovement() => _movementLockCount = 0;
 
     private void Awake()
     {
