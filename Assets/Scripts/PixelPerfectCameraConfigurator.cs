@@ -2,19 +2,14 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using Unity.Cinemachine;
 
-// Configures the PixelPerfectCamera on this GameObject to match OMORI's pixel rendering.
+// Configures the PixelPerfectCamera and Camera on this GameObject at startup.
 // Attach this to the same GameObject as the main Camera in every scene.
-//
-// Settings applied:
-//   refResolution  640x480    — fixed internal canvas size
-//   assetsPPU      32         — must match your sprite import PPU
-//   upscaleRT      false      — ResolutionManager's viewport handles letterboxing, not the RT
-//   pixelSnapping  true       — snaps sprites to pixel grid, prevents sub-pixel wobble
-//   cropFrameX/Y   true       — pad with black if aspect doesn't fit exactly
-//   stretchFill    false      — NEVER stretch to fill; integer scale only
 [RequireComponent(typeof(Camera))]
 public class PixelPerfectCameraConfigurator : MonoBehaviour
 {
+    [Tooltip("Pixels per unit used by all sprites. Must match the sprite import setting.")]
+    public float pixelsPerUnit = 32;
+
     private void Awake()
     {
         ConfigurePixelPerfectCamera();
@@ -22,13 +17,9 @@ public class PixelPerfectCameraConfigurator : MonoBehaviour
         CheckCinemachineExtensions();
     }
 
-    // Add (if missing) and configure the URP PixelPerfectCamera component.
     private void ConfigurePixelPerfectCamera()
     {
-        var ppc = GetComponent<PixelPerfectCamera>();
-        if (ppc == null)
-            ppc = gameObject.AddComponent<PixelPerfectCamera>();
-
+        var ppc = GetComponent<PixelPerfectCamera>() ?? gameObject.AddComponent<PixelPerfectCamera>();
         ppc.refResolutionX = 640;
         ppc.refResolutionY = 480;
         ppc.assetsPPU      = 32;
@@ -36,8 +27,7 @@ public class PixelPerfectCameraConfigurator : MonoBehaviour
         ppc.cropFrame      = PixelPerfectCamera.CropFrame.Windowbox;
     }
 
-    // Set the camera clear colour to pure black so letterbox bars are black,
-    // matching OMORI's black border behaviour.
+    // Pure black background so letterbox bars are invisible.
     private void ConfigureCamera()
     {
         var cam = GetComponent<Camera>();
@@ -45,26 +35,23 @@ public class PixelPerfectCameraConfigurator : MonoBehaviour
         cam.clearFlags      = CameraClearFlags.SolidColor;
     }
 
-    // Warn (but do NOT modify) if any CinemachineCamera in the scene is missing the
-    // CinemachinePixelPerfect extension. That extension must be added manually via the Inspector.
+    // Warns if any Cinemachine camera is missing the CinemachinePixelPerfect extension — add it manually in the Inspector.
     private void CheckCinemachineExtensions()
     {
-        var vcams = FindObjectsByType<CinemachineCamera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        foreach (var vcam in vcams)
+        foreach (var vcam in FindObjectsByType<CinemachineCamera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
         {
             if (vcam.GetComponent<CinemachinePixelPerfect>() == null)
-                Debug.LogWarning($"[Resolution] '{vcam.name}' is missing the CinemachinePixelPerfect extension. Add it manually in the Inspector.");
+                Debug.LogWarning($"[PixelPerfect] '{vcam.name}' is missing the CinemachinePixelPerfect extension. Add it in the Inspector.");
         }
     }
-    public float pixelsPerUnit = 32;
-    void LateUpdate()
+
+    // Snaps the camera position to the pixel grid every frame to prevent sub-pixel jitter.
+    private void LateUpdate()
     {
-        float unitsPerPixel = 1f / pixelsPerUnit;
-
+        float snap = 1f / pixelsPerUnit;
         Vector3 pos = transform.position;
-        pos.x = Mathf.Round(pos.x / unitsPerPixel) * unitsPerPixel;
-        pos.y = Mathf.Round(pos.y / unitsPerPixel) * unitsPerPixel;
-
+        pos.x = Mathf.Round(pos.x / snap) * snap;
+        pos.y = Mathf.Round(pos.y / snap) * snap;
         transform.position = pos;
     }
 }

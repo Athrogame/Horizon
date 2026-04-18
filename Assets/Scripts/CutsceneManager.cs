@@ -2,76 +2,69 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+// Plays a sequenced list of CutsceneActions top-to-bottom.
+// Can be triggered on Start, on Enable, or by calling StartCutscene() from another script or UnityEvent.
 public class CutsceneManager : MonoBehaviour
 {
-    [Tooltip("If checked, plays automatically when the game starts/object loads")]
+    [Tooltip("Plays automatically when the scene loads.")]
     public bool playOnStart = false;
 
-    [Tooltip("If checked, plays automatically when the GameObject is turned from Inactive to Active")]
+    [Tooltip("Plays automatically whenever this GameObject is activated.")]
     public bool playOnEnable = false;
 
-    [Tooltip("If checked, this cutscene will never play more than once — even if you leave and re-enter the room")]
+    [Tooltip("This cutscene will never play more than once, even across scene reloads.")]
     public bool playOnlyOnce = false;
 
-    [Tooltip("A unique ID used to remember if this cutscene has already played. MUST be unique across all scenes! (e.g. 'Scene1_IntroCutscene')")]
+    [Tooltip("Unique save key for the 'Play Only Once' flag. Must be unique across all scenes (e.g. 'Forest_IntroCutscene').")]
     public string cutsceneID = "";
 
-    [Tooltip("Add actions to this list to build your cutscene top-to-bottom!")]
+    [Tooltip("The list of actions that make up this cutscene. Executed top-to-bottom.")]
     public List<CutsceneAction> cutsceneActions = new List<CutsceneAction>();
 
     private Coroutine activeRoutine;
 
     private void Start()
     {
-        if (playOnStart && !playOnEnable) // Prevent double-fire if both are checked
-        {
+        // Guard against double-fire if both flags are set.
+        if (playOnStart && !playOnEnable)
             StartCoroutine(DelayedStart());
-        }
     }
 
     private void OnEnable()
     {
         if (playOnEnable)
-        {
             StartCoroutine(DelayedStart());
-        }
     }
 
+    // One-frame delay so all Awake/Start methods finish before the cutscene begins.
     private IEnumerator DelayedStart()
     {
-        // One frame grace period to let standard Awake/Start logic fully boot up in Unity (e.g. PlayerController)
         yield return new WaitForEndOfFrame();
         StartCutscene();
     }
 
-    /// <summary>
-    /// Call this from a Trigger Collider or another script to begin the cutscene sequence!
-    /// </summary>
+    // Begins the cutscene. Call this from a trigger collider, UnityEvent, or another script.
     public void StartCutscene()
     {
         if (playOnlyOnce)
         {
             if (string.IsNullOrEmpty(cutsceneID))
             {
-                Debug.LogWarning($"[CutsceneManager] '{gameObject.name}' has 'Play Only Once' checked but no Cutscene ID set! The cutscene will always replay. Please set a unique Cutscene ID in the Inspector.");
+                Debug.LogWarning($"[CutsceneManager] '{gameObject.name}' has Play Only Once enabled but no Cutscene ID set — it will always replay.");
             }
             else if (PlayerPrefs.GetInt(cutsceneID, 0) == 1)
             {
-                // Already played before — skip it entirely
-                return;
+                return; // Already played — skip.
             }
         }
 
         if (activeRoutine != null)
-        {
             StopCoroutine(activeRoutine);
-        }
+
         activeRoutine = StartCoroutine(PlayCutsceneRoutine());
     }
 
-    /// <summary>
-    /// Resets this cutscene so it can play again (clears the PlayerPrefs flag).
-    /// </summary>
+    // Clears the Play Only Once save flag so this cutscene can play again.
     public void ResetCutscene()
     {
         if (!string.IsNullOrEmpty(cutsceneID))
@@ -80,14 +73,12 @@ public class CutsceneManager : MonoBehaviour
 
     private IEnumerator PlayCutsceneRoutine()
     {
-        // 1. Lock the player's movement while the cutscene has taken control
         if (PlayerController.I != null)
         {
             PlayerController.I.LockMovement();
             PlayerController.I.ForceIdle();
         }
 
-        // 2. Play exactly through the sequenced actions
         foreach (CutsceneAction action in cutsceneActions)
         {
             switch (action.actionType)
@@ -105,19 +96,16 @@ public class CutsceneManager : MonoBehaviour
                         else
                             StartCoroutine(MoveRoutine(action.targetToMove, action.destinationNode, action.moveSpeed, action.useTweening, action.tweenCurve));
                     }
-                    else
-                    {
-                        Debug.LogWarning("Cutscene Action Failed: Missing Move Targets!");
-                    }
+                    else Debug.LogWarning("[CutsceneManager] MoveToTransform: missing target or destination.");
                     break;
 
                 case CutsceneActionType.TeleportObject:
                     if (action.targetToMove != null && action.destinationNode != null)
                     {
-                        // 1. We MUST preserve their current Z-depth so they don't vanish behind the 2D background tilemap!
+                        // Preserve Z so the object stays on the correct depth layer.
                         Vector3 dest = new Vector3(action.destinationNode.position.x, action.destinationNode.position.y, action.targetToMove.position.z);
-                        
-                        // 2. If it's a physics object (like the Player), we MUST tell the rigid body to warp and kill its velocity!
+
+                        // Warp the Rigidbody2D directly so physics doesn't interpolate to the new position.
                         Rigidbody2D rb = action.targetToMove.GetComponent<Rigidbody2D>();
                         if (rb != null)
                         {
@@ -127,88 +115,58 @@ public class CutsceneManager : MonoBehaviour
 
                         action.targetToMove.position = dest;
                     }
-                    else
-                    {
-                        Debug.LogWarning("Cutscene Action Failed: Missing Teleport Targets!");
-                    }
+                    else Debug.LogWarning("[CutsceneManager] TeleportObject: missing target or destination.");
                     break;
 
                 case CutsceneActionType.ShowDialogue:
                     DialogueBox dBox = action.dialogueBox;
-                    // Automatically find the DialogueBox if the developer forgot to manually drag it into the inspector slot
                     if (dBox == null)
-                    {
                         dBox = Object.FindAnyObjectByType<DialogueBox>(FindObjectsInactive.Include);
-                    }
 
                     if (dBox != null)
                     {
-                        // Ensure the Dialogue Box is forced active if the developer had it turned off in the hierarchy!
                         if (!dBox.gameObject.activeSelf)
                             dBox.gameObject.SetActive(true);
 
                         bool hasCustomLines = action.dialogueLines != null && action.dialogueLines.Count > 0;
-                        bool hasBoxLines = dBox.dialogueLines != null && dBox.dialogueLines.Count > 0;
+                        bool hasBoxLines    = dBox.dialogueLines    != null && dBox.dialogueLines.Count > 0;
 
                         if (hasCustomLines)
-                        {
-                            // If the cutscene action has custom lines typed into it, play those!
                             dBox.ShowDialogue(action.dialogueLines);
-                        }
                         else if (hasBoxLines)
-                        {
-                            // If the cutscene action has no lines, but the Dialogue Box ALREADY has lines, play the box's lines!
                             dBox.StartDialogue();
-                        }
                         else
                         {
-                            Debug.LogWarning("Cutscene Action failed: No dialogue lines were found in the Action OR the Dialogue Box!");
+                            Debug.LogWarning("[CutsceneManager] ShowDialogue: no lines found on the action or the DialogueBox.");
                             break;
                         }
-                        
+
                         if (action.waitToFinish)
-                        {
-                            // Wait perfectly in limbo until the Dialogue Box has completely finished reading its lines
                             while (dBox.IsDialogueActive())
-                            {
                                 yield return null;
-                            }
-                        }
                     }
-                    else
-                    {
-                        Debug.LogWarning("Cutscene Action missing Dialogue Box!");
-                    }
+                    else Debug.LogWarning("[CutsceneManager] ShowDialogue: no DialogueBox found.");
                     break;
 
                 case CutsceneActionType.SetAnimationTrigger:
                     if (action.targetAnimator != null && !string.IsNullOrEmpty(action.animationTriggerName))
-                    {
                         action.targetAnimator.SetTrigger(action.animationTriggerName);
-                    }
                     break;
+
                 case CutsceneActionType.SetAnimationBool:
                     if (action.targetAnimator != null && !string.IsNullOrEmpty(action.animationBoolName))
-                    {
                         action.targetAnimator.SetBool(action.animationBoolName, action.animationBoolValue);
-                    }
                     break;
+
                 case CutsceneActionType.PlayAnimationState:
                     if (action.targetAnimator != null && action.animationClip != null)
-                    {
                         action.targetAnimator.Play(action.animationClip.name);
-                    }
                     break;
 
                 case CutsceneActionType.SetActive:
                     if (action.targetGameObject != null)
-                    {
                         action.targetGameObject.SetActive(action.setActiveState);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Cutscene Action Failed: Missing GameObject to SetActive!");
-                    }
+                    else Debug.LogWarning("[CutsceneManager] SetActive: no GameObject assigned.");
                     break;
 
                 case CutsceneActionType.CameraShake:
@@ -221,59 +179,42 @@ public class CutsceneManager : MonoBehaviour
                 case CutsceneActionType.ChangeCameraTarget:
                     if (action.virtualCamera != null && action.cameraFollowTarget != null)
                     {
-                        Component vcam = action.virtualCamera.GetComponent("CinemachineCamera");
-                        if (vcam == null) vcam = action.virtualCamera.GetComponent("Unity.Cinemachine.CinemachineCamera");
-                        if (vcam == null) vcam = action.virtualCamera.GetComponent("CinemachineVirtualCamera");
+                        // Support Cinemachine v2 and v3 via reflection.
+                        Component vcam = action.virtualCamera.GetComponent("CinemachineCamera")
+                                      ?? action.virtualCamera.GetComponent("Unity.Cinemachine.CinemachineCamera")
+                                      ?? action.virtualCamera.GetComponent("CinemachineVirtualCamera");
 
                         if (vcam != null)
                         {
-                            // Try V2 Properties
-                            var propFollow = vcam.GetType().GetProperty("Follow");
-                            if (propFollow != null) propFollow.SetValue(vcam, action.cameraFollowTarget, null);
-                            
-                            var propLookAt = vcam.GetType().GetProperty("LookAt");
-                            if (propLookAt != null) propLookAt.SetValue(vcam, action.cameraFollowTarget, null);
+                            // Cinemachine v2: Follow / LookAt properties.
+                            vcam.GetType().GetProperty("Follow")?.SetValue(vcam, action.cameraFollowTarget, null);
+                            vcam.GetType().GetProperty("LookAt")?.SetValue(vcam, action.cameraFollowTarget, null);
 
-                            // Try V3 Struct properties
+                            // Cinemachine v3: nested Target struct with TrackingTarget / LookAtTarget.
                             var propTarget = vcam.GetType().GetProperty("Target");
                             if (propTarget != null)
                             {
-                                object targetStruct = propTarget.GetValue(vcam); 
-                                if (targetStruct != null)
+                                object t = propTarget.GetValue(vcam);
+                                if (t != null)
                                 {
-                                    var fTracking = targetStruct.GetType().GetField("TrackingTarget");
-                                    if (fTracking != null) fTracking.SetValue(targetStruct, action.cameraFollowTarget);
-                                    
-                                    var pTracking = targetStruct.GetType().GetProperty("TrackingTarget");
-                                    if (pTracking != null) pTracking.SetValue(targetStruct, action.cameraFollowTarget, null);
-
-                                    var fLookA = targetStruct.GetType().GetField("LookAtTarget");
-                                    if (fLookA != null) fLookA.SetValue(targetStruct, action.cameraFollowTarget);
-                                    
-                                    var pLookA = targetStruct.GetType().GetProperty("LookAtTarget");
-                                    if (pLookA != null) pLookA.SetValue(targetStruct, action.cameraFollowTarget, null);
-
-                                    propTarget.SetValue(vcam, targetStruct, null);
+                                    t.GetType().GetField("TrackingTarget")?.SetValue(t, action.cameraFollowTarget);
+                                    t.GetType().GetProperty("TrackingTarget")?.SetValue(t, action.cameraFollowTarget, null);
+                                    t.GetType().GetField("LookAtTarget")?.SetValue(t, action.cameraFollowTarget);
+                                    t.GetType().GetProperty("LookAtTarget")?.SetValue(t, action.cameraFollowTarget, null);
+                                    propTarget.SetValue(vcam, t, null);
                                 }
                             }
                         }
-                        else
-                        {
-                            Debug.LogWarning("ChangeCameraTarget Failed: Could not find CinemachineCamera or CinemachineVirtualCamera component on the provided object.");
-                        }
+                        else Debug.LogWarning("[CutsceneManager] ChangeCameraTarget: no Cinemachine camera found on the assigned object.");
                     }
                     break;
             }
         }
 
-        // 3. The cutscene is over — force the lock count to zero so movement is always restored
-        // regardless of any unbalanced locks from dialogue or other actions mid-cutscene.
+        // Force movement fully unlocked at the end regardless of any mid-cutscene lock imbalance.
         if (PlayerController.I != null)
-        {
             PlayerController.I.ForceUnlockMovement();
-        }
 
-        // 4. If this cutscene should only play once, save that it has been seen
         if (playOnlyOnce && !string.IsNullOrEmpty(cutsceneID))
         {
             PlayerPrefs.SetInt(cutsceneID, 1);
@@ -284,173 +225,103 @@ public class CutsceneManager : MonoBehaviour
     private IEnumerator MoveRoutine(Transform target, Transform dest, float speed, bool useTweening, TweenCurve curve)
     {
         Vector3 startPos = target.position;
-        // Enforce strict 2D movement by never altering the character's original Z depth
+        // Preserve Z depth so 2D objects don't shift behind the background.
         Vector3 endPos = new Vector3(dest.position.x, dest.position.y, target.position.z);
 
         if (useTweening)
         {
             float distance = Vector3.Distance(startPos, endPos);
             if (distance <= 0.001f) yield break;
-            
-            float duration = distance / speed;
+
+            float duration    = distance / speed;
             float elapsedTime = 0f;
 
             while (elapsedTime < duration)
             {
                 elapsedTime += Time.deltaTime;
                 float t = elapsedTime / duration;
-                
-                if (curve == TweenCurve.EaseInOut)
-                {
-                    // Starts slow, speeds up, ends slow
-                    t = Mathf.SmoothStep(0f, 1f, t);
-                }
-                else if (curve == TweenCurve.EaseIn)
-                {
-                    // Starts slow, ends fast (Quadratic)
-                    t = t * t;
-                }
-                else if (curve == TweenCurve.EaseOut)
-                {
-                    // Starts fast, ends slow (Quadratic)
-                    t = t * (2f - t);
-                }
-                
+
+                t = curve == TweenCurve.EaseInOut ? Mathf.SmoothStep(0f, 1f, t)
+                  : curve == TweenCurve.EaseIn    ? t * t
+                  : curve == TweenCurve.EaseOut   ? t * (2f - t)
+                  : t;
+
                 target.position = Vector3.Lerp(startPos, endPos, t);
                 yield return null;
             }
-            target.position = endPos; // Snap perfectly to end to prevent micro-errors
         }
         else
         {
-            // Linear movement (no tweening)
             while (Vector3.Distance(target.position, endPos) > 0.05f)
             {
                 target.position = Vector3.MoveTowards(target.position, endPos, speed * Time.deltaTime);
                 yield return null;
             }
-            target.position = endPos; // Snap perfectly to end to prevent micro-errors
         }
+
+        target.position = endPos;
     }
 
     private IEnumerator CameraShakeRoutine(float duration, float magnitude, GameObject virtualCamera)
     {
         if (virtualCamera == null)
         {
-            Debug.LogWarning("[CameraShake] Failed: No Virtual Camera assigned!");
+            Debug.LogWarning("[CameraShake] No Virtual Camera assigned.");
             yield break;
         }
 
-        /* 
-        // WORKAROUND: Find and disable ALL Pixel Perfect Camera components (both VCam and Main Camera)
-        List<Behaviour> pixelPerfectComponents = new List<Behaviour>();
+        // Support Cinemachine v2 and v3 component names.
+        Component noise = virtualCamera.GetComponent("CinemachineBasicMultiChannelPerlin")
+                       ?? virtualCamera.GetComponent("Unity.Cinemachine.CinemachineBasicMultiChannelPerlin");
 
-        Behaviour ppVcam1 = virtualCamera.GetComponent("UnityEngine.U2D.PixelPerfectCamera") as Behaviour;
-        if (ppVcam1 != null) pixelPerfectComponents.Add(ppVcam1);
-        Behaviour ppVcam2 = virtualCamera.GetComponent("PixelPerfectCamera") as Behaviour;
-        if (ppVcam2 != null && !pixelPerfectComponents.Contains(ppVcam2)) pixelPerfectComponents.Add(ppVcam2);
-
-        if (Camera.main != null)
+        if (noise == null)
         {
-            Behaviour ppMain1 = Camera.main.GetComponent("UnityEngine.U2D.PixelPerfectCamera") as Behaviour;
-            if (ppMain1 != null && !pixelPerfectComponents.Contains(ppMain1)) pixelPerfectComponents.Add(ppMain1);
-            Behaviour ppMain2 = Camera.main.GetComponent("PixelPerfectCamera") as Behaviour;
-            if (ppMain2 != null && !pixelPerfectComponents.Contains(ppMain2)) pixelPerfectComponents.Add(ppMain2);
-        }
-
-        List<Behaviour> disabledPPs = new List<Behaviour>();
-        foreach (var pp in pixelPerfectComponents)
-        {
-            if (pp != null && pp.enabled)
-            {
-                pp.enabled = false;
-                disabledPPs.Add(pp);
-                Debug.Log($"[CameraShake] WORKAROUND: Temporarily disabled '{pp.GetType().Name}' on '{pp.gameObject.name}'!");
-            }
-        }
-        */
-
-        // Support Cinemachine v2 and v3
-        Component noiseComp = virtualCamera.GetComponent("CinemachineBasicMultiChannelPerlin");
-        if (noiseComp == null)
-            noiseComp = virtualCamera.GetComponent("Unity.Cinemachine.CinemachineBasicMultiChannelPerlin");
-
-        if (noiseComp == null)
-        {
-            Debug.LogWarning($"[CameraShake] Failed: '{virtualCamera.name}' has no CinemachineBasicMultiChannelPerlin component.");
+            Debug.LogWarning($"[CameraShake] '{virtualCamera.name}' has no CinemachineBasicMultiChannelPerlin component.");
             yield break;
         }
 
-        var ampProp = noiseComp.GetType().GetProperty("AmplitudeGain");
-        var ampField = noiseComp.GetType().GetField("AmplitudeGain");
-        var legacyAmpField = noiseComp.GetType().GetField("m_AmplitudeGain");
+        // Locate AmplitudeGain and FrequencyGain via reflection to support both Cinemachine versions.
+        var ampProp        = noise.GetType().GetProperty("AmplitudeGain");
+        var ampField       = noise.GetType().GetField("AmplitudeGain");
+        var legacyAmpField = noise.GetType().GetField("m_AmplitudeGain");
 
-        var profileField = noiseComp.GetType().GetField("NoiseProfile");
-        var legacyProfileField = noiseComp.GetType().GetField("m_NoiseProfile");
-        var profileLegacy2 = noiseComp.GetType().GetField("m_Definition"); // older versions
-        
-        object profile = null;
-        if (profileField != null) profile = profileField.GetValue(noiseComp);
-        else if (legacyProfileField != null) profile = legacyProfileField.GetValue(noiseComp);
-        else if (profileLegacy2 != null) profile = profileLegacy2.GetValue(noiseComp);
+        var freqProp        = noise.GetType().GetProperty("FrequencyGain");
+        var freqField       = noise.GetType().GetField("FrequencyGain");
+        var legacyFreqField = noise.GetType().GetField("m_FrequencyGain");
 
-        if (profile == null)
-        {
-            Debug.LogWarning($"[CameraShake] Failed: The noise component on '{virtualCamera.name}' has no Noise Profile! (It must hold something like '6D Shake').");
-        }
         if (ampProp == null && ampField == null && legacyAmpField == null)
         {
-            Debug.LogWarning("[CameraShake] Failed: Could not find AmplitudeGain on the noise component.");
+            Debug.LogWarning("[CameraShake] Could not find AmplitudeGain on the noise component.");
             yield break;
         }
 
-        var freqProp = noiseComp.GetType().GetProperty("FrequencyGain");
-        var freqField = noiseComp.GetType().GetField("FrequencyGain");
-        var legacyFreqField = noiseComp.GetType().GetField("m_FrequencyGain");
+        // Read original values so they can be restored after the shake.
+        float originalAmp  = ampProp  != null ? (float)ampProp.GetValue(noise)
+                           : ampField != null ? (float)ampField.GetValue(noise)
+                           : (float)legacyAmpField.GetValue(noise);
 
-        // Remember the original amplitude so we can restore it cleanly
-        float originalAmplitude = 0f;
-        if (ampProp != null) originalAmplitude = (float)ampProp.GetValue(noiseComp);
-        else if (ampField != null) originalAmplitude = (float)ampField.GetValue(noiseComp);
-        else if (legacyAmpField != null) originalAmplitude = (float)legacyAmpField.GetValue(noiseComp);
+        float originalFreq = freqProp  != null ? (float)freqProp.GetValue(noise)
+                           : freqField != null ? (float)freqField.GetValue(noise)
+                           : legacyFreqField != null ? (float)legacyFreqField.GetValue(noise)
+                           : 1f;
 
-        float originalFrequency = 1f;
-        if (freqProp != null) originalFrequency = (float)freqProp.GetValue(noiseComp);
-        else if (freqField != null) originalFrequency = (float)freqField.GetValue(noiseComp);
-        else if (legacyFreqField != null) originalFrequency = (float)legacyFreqField.GetValue(noiseComp);
-
-        // Set shake amplitude
-        if (ampProp != null) ampProp.SetValue(noiseComp, magnitude);
-        else if (ampField != null) ampField.SetValue(noiseComp, magnitude);
-        else if (legacyAmpField != null) legacyAmpField.SetValue(noiseComp, magnitude);
-
-        // Guarantee a reasonable frequency
-        float runFreq = originalFrequency == 0f ? 1.5f : originalFrequency;
-        if (freqProp != null) freqProp.SetValue(noiseComp, runFreq);
-        else if (freqField != null) freqField.SetValue(noiseComp, runFreq);
-        else if (legacyFreqField != null) legacyFreqField.SetValue(noiseComp, runFreq);
+        // Apply shake values.
+        float runFreq = originalFreq == 0f ? 1.5f : originalFreq;
+        SetNoiseValue(noise, ampProp,  ampField,  legacyAmpField,  magnitude);
+        SetNoiseValue(noise, freqProp, freqField, legacyFreqField, runFreq);
 
         yield return new WaitForSeconds(duration);
 
-        // Restore the original amplitude when done
-        if (ampProp != null) ampProp.SetValue(noiseComp, originalAmplitude);
-        else if (ampField != null) ampField.SetValue(noiseComp, originalAmplitude);
-        else if (legacyAmpField != null) legacyAmpField.SetValue(noiseComp, originalAmplitude);
+        // Restore original values.
+        SetNoiseValue(noise, ampProp,  ampField,  legacyAmpField,  originalAmp);
+        SetNoiseValue(noise, freqProp, freqField, legacyFreqField, originalFreq);
+    }
 
-        if (freqProp != null) freqProp.SetValue(noiseComp, originalFrequency);
-        else if (freqField != null) freqField.SetValue(noiseComp, originalFrequency);
-        else if (legacyFreqField != null) legacyFreqField.SetValue(noiseComp, originalFrequency);
-
-        /*
-        // WORKAROUND: Turn Pixel Perfect scripts back on!
-        foreach (var pp in disabledPPs)
-        {
-            if (pp != null)
-            {
-                pp.enabled = true;
-                Debug.Log($"[CameraShake] WORKAROUND: Shake finished. Re-enabled Pixel Perfect Camera on {pp.gameObject.name}.");
-            }
-        }
-        */
+    // Helper to set a float value on a noise component regardless of whether it's a property or field.
+    private void SetNoiseValue(Component noise, System.Reflection.PropertyInfo prop, System.Reflection.FieldInfo field, System.Reflection.FieldInfo legacyField, float value)
+    {
+        if (prop        != null) prop.SetValue(noise, value, null);
+        else if (field  != null) field.SetValue(noise, value);
+        else legacyField?.SetValue(noise, value);
     }
 }

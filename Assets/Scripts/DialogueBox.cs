@@ -476,6 +476,7 @@ public class DialogueBox : MonoBehaviour
         bool speakerWasActive = speakerBoxController != null && speakerBoxController.gameObject.activeSelf;
 
         SpeakerHide();
+        Debug.Log("Showing question");
         var showMethod = questionBoxController.GetType().GetMethod("ShowQuestion");
         showMethod?.Invoke(questionBoxController, new object[] { question });
 
@@ -496,6 +497,7 @@ public class DialogueBox : MonoBehaviour
                 SpeakerShowNormal();
                 SpeakerSetEmotionForLine(currentDialogueIndex);
             }
+            Debug.Log("Displaying text");
             StartDisplayingText();
         }
         else
@@ -507,7 +509,6 @@ public class DialogueBox : MonoBehaviour
     private IEnumerator SlideUp()
     {
         if (rectTransform == null) yield break;
-
 
         float elapsed = 0f;
         Vector2 startPos = hiddenPosition;
@@ -524,8 +525,7 @@ public class DialogueBox : MonoBehaviour
         }
 
         rectTransform.anchoredPosition = endPos;
-
-
+        
         StartDisplayingText();
     }
 
@@ -562,7 +562,6 @@ public class DialogueBox : MonoBehaviour
 
                     Vector3[] vertices = textInfo.meshInfo[materialIndex].vertices;
 
-                    // Omori bounce offset
                     float offset = Mathf.Sin(Time.time * 20f + j * 0.8f) * 6f;
 
                     vertices[vertexIndex + 0].y += offset;

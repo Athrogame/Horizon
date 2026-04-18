@@ -28,7 +28,6 @@ public class QuestionBox : MonoBehaviour
     private int selectedIndex = 0;
     private QuestionData currentQuestion;
     private bool isActive = false;
-    private bool navHeld = false;
 
     private RectTransform rectTransform;
     private Vector2 visiblePosition;
@@ -48,13 +47,14 @@ public class QuestionBox : MonoBehaviour
     public void ShowQuestion(QuestionData question)
     {
         currentQuestion = question;
-        selectedIndex = 0;
+        selectedIndex = -1;
         isActive = true;
 
         optionAText.text = question.optionA.label;
         optionBText.text = question.optionB.label;
 
         UpdateArrow();
+        Debug.Log("Showing question");
         gameObject.SetActive(true);
 
         if (slideRoutine != null) StopCoroutine(slideRoutine);
@@ -80,7 +80,6 @@ public class QuestionBox : MonoBehaviour
         if (navigateAction != null)
         {
             navigateAction.action.started += OnNavigate;
-            navigateAction.action.canceled += OnNavigateCanceled;
             navigateAction.action.Enable();
         }
 
@@ -94,10 +93,7 @@ public class QuestionBox : MonoBehaviour
     private void UnsubscribeInput()
     {
         if (navigateAction != null)
-        {
             navigateAction.action.started -= OnNavigate;
-            navigateAction.action.canceled -= OnNavigateCanceled;
-        }
 
         if (confirmAction != null)
             confirmAction.action.started -= OnConfirm;
@@ -113,11 +109,6 @@ public class QuestionBox : MonoBehaviour
             selectedIndex = 1;
 
         UpdateArrow();
-    }
-
-    private void OnNavigateCanceled(InputAction.CallbackContext ctx)
-    {
-        navHeld = false;
     }
 
     private void OnConfirm(InputAction.CallbackContext ctx)

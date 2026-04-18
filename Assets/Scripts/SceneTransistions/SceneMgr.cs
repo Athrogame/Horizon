@@ -61,10 +61,9 @@ public class SceneMgr : MonoBehaviour
         else
             DoLoadScene(sceneIndex);
     }
-    public float FadeInSpeed;
     private IEnumerator LoadSceneWithTransition(int sceneIndex)
     {
-        transitionAnim.SetTrigger(EndTrigger);
+        transitionAnim.SetTrigger("end");
         yield return new WaitForSecondsRealtime(fadeOutDuration);
 
         DoLoadScene(sceneIndex);

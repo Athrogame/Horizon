@@ -1,43 +1,29 @@
 using UnityEngine;
-using System.Collections.Generic;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Simple helper: press a key to show example dialogue using DialogueBox.
-/// Attach to any GameObject and optionally assign a DialogueBox in the inspector.
-/// </summary>
+// Triggers a DialogueBox when an input action fires.
+// Attach to any GameObject. Assign the DialogueBox and the Interact InputActionReference in the Inspector.
 public class ShowDialogueOnKey : MonoBehaviour
 {
-    [Tooltip("DialogueBox component to control. If left empty the script will try to FindObjectOfType at Start.")]
+    [Tooltip("DialogueBox to trigger. Auto-found in the scene if left empty.")]
     public DialogueBox dialogueBox;
 
-    [Tooltip("Key that triggers the dialogue (default = P). Used only if Interact action is not assigned.")]
-    public KeyCode triggerKey = KeyCode.P;
-
-    [Tooltip("(New Input System) Optional Input Action Reference for the Interact action. If set, this will be used instead of KeyCode.")]
+    [Tooltip("Input action that triggers the dialogue (e.g. Player/Interact).")]
     public InputActionReference interactAction;
 
-    [Tooltip("(New Input System) Fallback key when Interact action is not assigned. E = Interact.")]
-    public UnityEngine.InputSystem.Key triggerKeyInput = UnityEngine.InputSystem.Key.E;
-
-    void Start()
+    private void Start()
     {
         if (dialogueBox == null)
-        {
-            // Include inactive so we find the DialogueBox even when it starts hidden
             dialogueBox = Object.FindAnyObjectByType<DialogueBox>(FindObjectsInactive.Include);
-            if (dialogueBox == null)
-            {
-                Debug.LogWarning("ShowDialogueOnKey: No DialogueBox found in scene. Assign one in the inspector.");
-            }
-        }
+
+        if (dialogueBox == null)
+            Debug.LogWarning("[ShowDialogueOnKey] No DialogueBox found. Assign one in the Inspector.");
     }
 
     private void OnEnable()
     {
-        if (interactAction != null && interactAction.action != null)
+        if (interactAction != null)
         {
-            // Only "started" so one press = one show (avoids double trigger with Hold/performed)
             interactAction.action.started += OnInteract;
             interactAction.action.Enable();
         }
@@ -45,31 +31,19 @@ public class ShowDialogueOnKey : MonoBehaviour
 
     private void OnDisable()
     {
-        if (interactAction != null && interactAction.action != null)
-        {
+        if (interactAction != null)
             interactAction.action.started -= OnInteract;
-            // Do NOT call Disable() on a shared asset action — it would disable it globally for all listeners.
-        }
-    }
-
-    void Update()
-    {
-        // Keyboard fallback removed — dialogue is only triggered via an assigned
-        // InputActionReference (interactAction) or an explicit script call.
+            // Do NOT call Disable() — this is a shared asset action managed externally.
     }
 
     private void OnInteract(InputAction.CallbackContext ctx)
     {
         if (dialogueBox == null)
             dialogueBox = Object.FindAnyObjectByType<DialogueBox>(FindObjectsInactive.Include);
-        if (dialogueBox == null)
-        {
-            Debug.LogWarning("ShowDialogueOnKey: No DialogueBox in scene. Add a UI with DialogueBox component.");
+
+        if (dialogueBox == null || dialogueBox.IsDialogueActive())
             return;
-        }
-        if (dialogueBox.IsDialogueActive())
-            return;
+
         dialogueBox.StartDialogue();
     }
 }
-
