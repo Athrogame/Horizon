@@ -1,13 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-// Do not `using MG.GIF` — it conflicts with UnityEngine.UI.Image.
 
 public class SpeakerBox : MonoBehaviour, ISpeakerBox
 {
@@ -26,24 +23,18 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     public float portraitScale = 0.92f;
 
     // -------------------------------------------------------------------------
-    // Emotion / GIF entries
+    // Emotion / image entries
     // -------------------------------------------------------------------------
     [System.Serializable]
-    public class GifEmotionEntry
+    public class EmotionEntry
     {
-        [Tooltip("Drag a .gif here directly — no bake step needed in Play Mode (Editor).")]
-        public Object gifSource;
-
-        [Tooltip("If true, the GIF loops while the speaker is visible.")]
-        public bool loop = true;
+        [Tooltip("Drag a Sprite here for this emotion.")]
+        public Sprite sprite;
     }
 
     [Header("Emotions")]
-    [Tooltip("Drag GIF files here. SpeakerBox decodes them at runtime in the Editor.")]
-    public List<GifEmotionEntry> emotionGifEntries = new List<GifEmotionEntry>();
-
-    [Tooltip("Legacy fallback. Used only when Emotion Gif Entries is empty. Supports pre-baked GifEmotionAnimation assets.")]
-    public List<GifEmotionAnimation> emotionAnimations = new List<GifEmotionAnimation>();
+    [Tooltip("Drag Sprites here. Index matches the dialogue line index.")]
+    public List<EmotionEntry> emotionEntries = new List<EmotionEntry>();
 
     // -------------------------------------------------------------------------
     // Slide animation
@@ -77,16 +68,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     public float backgroundFadeDuration = 0.2f;
 
     // -------------------------------------------------------------------------
-    // GIF playback tuning
-    // -------------------------------------------------------------------------
-    [Header("GIF Playback")]
-    [Tooltip("1 = normal speed. 2 = twice as fast. 0.5 = half speed.")]
-    public float gifPlaybackSpeed = 1f;
-
-    [Tooltip("Minimum seconds per frame. Prevents decoding too fast on very short-delay GIFs.")]
-    public float gifPlaybackFpsCap = 0.9f;
-
-    // -------------------------------------------------------------------------
     // Private state
     // -------------------------------------------------------------------------
     private bool isVisible;
@@ -95,34 +76,13 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     private Coroutine moveCoroutine;
     private Coroutine scaleCoroutine;
     private Coroutine bgFadeCoroutine;
-    private Coroutine emotionAnimationCoroutine;
 
     // Captured at Awake — the resting anchored position set in the layout.
     private Vector2 originalPos;
     private Vector3 originalLocalScale;
 
     private Color bgOriginalColor;
-    private object currentEmotionKey;
     private Image portraitImageComponent;
-
-    // -------------------------------------------------------------------------
-    // GIF runtime data
-    // -------------------------------------------------------------------------
-    private class RuntimeGifData
-    {
-        public List<Sprite> frames;
-        public List<float> delays;
-        public bool loop;
-    }
-
-    private readonly Dictionary<GifEmotionAnimation, RuntimeGifData> runtimeGifCache
-        = new Dictionary<GifEmotionAnimation, RuntimeGifData>();
-
-    private readonly Dictionary<Object, RuntimeGifData> runtimeGifSourceCache
-        = new Dictionary<Object, RuntimeGifData>();
-
-    private const int GifHeaderBytes = 6;
-    private const int RuntimeGifMaxFrames = 120;
 
     // -------------------------------------------------------------------------
     // Awake — wiring and initial state
@@ -180,14 +140,14 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (portraitObject == null) return;
         var rt = portraitObject.GetComponent<RectTransform>();
         if (rt == null) return;
-        
+
         // First match the speaker box exactly without any pixel offsets
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
         rt.pivot     = new Vector2(0.5f, 0.5f);
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
-        
+
         // Then proportionally shrink from both sides via the middle
         rt.localScale = new Vector3(portraitScale, portraitScale, 1f);
     }
@@ -231,7 +191,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     {
         if (!isVisible || speakerRect == null) return;
 
-        StopEmotionAnimation();
         isVisible = false;
         isFocused = false;
 
@@ -280,204 +239,36 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     }
 
     // -------------------------------------------------------------------------
-    // Emotion / GIF selection
+    // Emotion / image selection
     // -------------------------------------------------------------------------
 
-    // Sets the portrait GIF for the given dialogue line index.
+    // Sets the portrait sprite for the given dialogue line index.
     public void SetEmotionForLine(int index)
     {
         if (portraitObject == null) return;
 
-        // Preferred path: raw GIF entries dragged directly into the inspector.
-        if (emotionGifEntries != null && emotionGifEntries.Count > 0)
-        {
-            if (index < 0 || index >= emotionGifEntries.Count) return;
-
-            var entry = emotionGifEntries[index];
-            if (entry == null || entry.gifSource == null) { ClearPortraitAndStopAnimation(); return; }
-
-            var runtime = GetRuntimeGifData(entry);
-            if (runtime == null || runtime.frames.Count == 0) { ClearPortraitAndStopAnimation(); return; }
-
-            StopEmotionAnimation();
-            currentEmotionKey = entry.gifSource;
-            emotionAnimationCoroutine = StartCoroutine(PlayEmotionFrames(runtime, currentEmotionKey));
-            return;
-        }
-
-        // Legacy fallback: GifEmotionAnimation assets.
-        if (emotionAnimations == null || emotionAnimations.Count == 0) return;
-        if (index < 0 || index >= emotionAnimations.Count) return;
-
-        var anim = emotionAnimations[index];
-        if (anim == null || anim.gifSource == null) { ClearPortraitAndStopAnimation(); return; }
-
-        var runtimeAnim = GetRuntimeGifData(anim);
-        if (runtimeAnim == null || runtimeAnim.frames.Count == 0) { ClearPortraitAndStopAnimation(); return; }
-
-        StopEmotionAnimation();
-        currentEmotionKey = anim;
-        emotionAnimationCoroutine = StartCoroutine(PlayEmotionFrames(runtimeAnim, currentEmotionKey));
-    }
-
-    // -------------------------------------------------------------------------
-    // GIF decode and cache
-    // -------------------------------------------------------------------------
-
-    private RuntimeGifData GetRuntimeGifData(GifEmotionAnimation anim)
-    {
-        if (anim == null) return null;
-        if (runtimeGifCache.TryGetValue(anim, out var cached)) return cached;
-
-        // Use pre-baked frames if available.
-        if (anim.IsReady)
-        {
-            var data = new RuntimeGifData { frames = anim.frames, delays = anim.frameDelays, loop = anim.loop };
-            runtimeGifCache[anim] = data;
-            return data;
-        }
-
-        if (!TryReadGifBytesFromAsset(anim.gifSource, out byte[] bytes)) return null;
-
-        var runtimeData = DecodeGifBytes(bytes, anim.name, anim.loop);
-        if (runtimeData == null) return null;
-
-        runtimeGifCache[anim] = runtimeData;
-        return runtimeData;
-    }
-
-    private RuntimeGifData GetRuntimeGifData(GifEmotionEntry entry)
-    {
-        if (entry == null || entry.gifSource == null) return null;
-
-        if (runtimeGifSourceCache.TryGetValue(entry.gifSource, out var cached))
-        {
-            cached.loop = entry.loop; // Loop flag can differ per entry even for the same GIF.
-            return cached;
-        }
-
-        if (!TryReadGifBytesFromAsset(entry.gifSource, out byte[] bytes)) return null;
-
-        var runtimeData = DecodeGifBytes(bytes, entry.gifSource.name, entry.loop);
-        if (runtimeData == null) return null;
-
-        runtimeGifSourceCache[entry.gifSource] = runtimeData;
-        return runtimeData;
-    }
-
-    private bool TryReadGifBytesFromAsset(Object sourceAsset, out byte[] bytes)
-    {
-        bytes = null;
-#if UNITY_EDITOR
-        string path = AssetDatabase.GetAssetPath(sourceAsset);
-        if (string.IsNullOrEmpty(path)) return false;
-
-        bytes = File.ReadAllBytes(path);
-        if (bytes == null || bytes.Length < GifHeaderBytes) return false;
-
-        string sig = Encoding.ASCII.GetString(bytes, 0, GifHeaderBytes);
-        if (sig != "GIF87a" && sig != "GIF89a")
-        {
-            Debug.LogError($"SpeakerBox: '{sourceAsset.name}' is not a valid GIF (signature: '{sig}', path: '{path}').");
-            return false;
-        }
-        return true;
-#else
-        Debug.LogError("SpeakerBox: Runtime GIF decode only works in the Editor. Bake GIFs for builds.");
-        return false;
-#endif
-    }
-
-    private RuntimeGifData DecodeGifBytes(byte[] bytes, string namingPrefix, bool loop)
-    {
-        var frames = new List<Sprite>();
-        var delays = new List<float>();
-
-        using (var decoder = new MG.GIF.Decoder(bytes))
-        {
-            var img = decoder.NextImage();
-            int frameIndex = 0;
-
-            while (img != null && frameIndex < RuntimeGifMaxFrames)
-            {
-                Texture2D tex = img.CreateTexture();
-                if (tex == null) break;
-
-                tex.filterMode = FilterMode.Point;
-                tex.wrapMode   = TextureWrapMode.Clamp;
-                tex.name       = $"{namingPrefix}_rt_frame_{frameIndex:000}";
-
-                var sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
-                sprite.name = $"{namingPrefix}_rt_sprite_{frameIndex:000}";
-
-                frames.Add(sprite);
-                delays.Add(Mathf.Max(0f, img.Delay / 1000f));
-
-                frameIndex++;
-                img = decoder.NextImage();
-            }
-        }
-
-        if (frames.Count == 0) return null;
-
-        return new RuntimeGifData { frames = frames, delays = delays, loop = loop };
-    }
-
-    // -------------------------------------------------------------------------
-    // GIF frame playback coroutine
-    // -------------------------------------------------------------------------
-
-    private IEnumerator PlayEmotionFrames(RuntimeGifData runtime, object key)
-    {
-        if (runtime == null || runtime.frames == null || runtime.frames.Count == 0) yield break;
-
-        if (portraitImageComponent == null && portraitObject != null)
+        if (portraitImageComponent == null)
             portraitImageComponent = portraitObject.GetComponent<Image>();
 
-        if (portraitImageComponent == null) yield break;
+        if (portraitImageComponent == null) return;
 
-        int frameCount = runtime.frames.Count;
-
-        do
-        {
-            for (int i = 0; i < frameCount; i++)
-            {
-                if (!isVisible || currentEmotionKey == null || currentEmotionKey != key)
-                    yield break;
-
-                var frameSprite = runtime.frames[i];
-                portraitImageComponent.sprite  = frameSprite;
-                portraitImageComponent.enabled = frameSprite != null;
-
-                float baseDelay = (runtime.delays != null && i < runtime.delays.Count) ? runtime.delays[i] : 0f;
-                float speed     = Mathf.Max(0.0001f, gifPlaybackSpeed);
-                float minDelay  = 1f / (Mathf.Max(0.0001f, gifPlaybackFpsCap) * speed);
-                float delay     = Mathf.Max(minDelay, baseDelay / speed);
-
-                yield return new WaitForSecondsRealtime(delay);
-            }
-        }
-        while (runtime.loop && isVisible && currentEmotionKey == key);
-    }
-
-    private void ClearPortraitAndStopAnimation()
-    {
-        StopEmotionAnimation();
-        if (portraitImageComponent != null)
+        if (emotionEntries == null || emotionEntries.Count == 0 || index < 0 || index >= emotionEntries.Count)
         {
             portraitImageComponent.sprite  = null;
             portraitImageComponent.enabled = false;
+            return;
         }
-    }
 
-    private void StopEmotionAnimation()
-    {
-        if (emotionAnimationCoroutine != null)
+        var entry = emotionEntries[index];
+        if (entry == null || entry.sprite == null)
         {
-            StopCoroutine(emotionAnimationCoroutine);
-            emotionAnimationCoroutine = null;
+            portraitImageComponent.sprite  = null;
+            portraitImageComponent.enabled = false;
+            return;
         }
-        currentEmotionKey = null;
+
+        portraitImageComponent.sprite  = entry.sprite;
+        portraitImageComponent.enabled = true;
     }
 
     // -------------------------------------------------------------------------
