@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -68,6 +69,37 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     public float backgroundFadeDuration = 0.2f;
 
     // -------------------------------------------------------------------------
+    // No-speaker / question mode
+    // -------------------------------------------------------------------------
+    [Header("Question Mode")]
+    [Tooltip("If true, no portrait is ever shown — the box is identity-less. Options still appear here during questions.")]
+    public bool noSpeaker = false;
+
+    [Tooltip("Container inside the speaker box where question options are generated. Should cover the same area as the portrait. Assign in Inspector.")]
+    public RectTransform optionsContainer;
+
+    [Tooltip("Font asset used for dynamically generated option labels. Falls back to TMP default if left empty.")]
+    public TMP_FontAsset optionFont;
+
+    [Tooltip("Font size for generated option labels.")]
+    public float optionFontSize = 40f;
+
+    [Tooltip("Extra gap in pixels between each option row. Row height is derived from font size automatically.")]
+    public float optionRowSpacing = 8f;
+
+    [Tooltip("Vertical padding above and below the entire option list in pixels.")]
+    public float optionVerticalPadding = 16f;
+
+    [Tooltip("Left padding in pixels added to each option label to leave room for the arrow.")]
+    public float optionLabelLeftPadding = 40f;
+
+    [Tooltip("Color of the generated option labels.")]
+    public Color optionTextColor = Color.white;
+
+    [Tooltip("Arrow indicator that points at the currently selected option. Should be a child of optionsContainer.")]
+    public RectTransform arrowIndicator;
+
+    // -------------------------------------------------------------------------
     // Private state
     // -------------------------------------------------------------------------
     private bool isVisible;
@@ -77,12 +109,15 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     private Coroutine scaleCoroutine;
     private Coroutine bgFadeCoroutine;
 
-    // Captured at Awake — the resting anchored position set in the layout.
     private Vector2 originalPos;
     private Vector3 originalLocalScale;
+    private Vector2 _originalSizeDelta;
 
     private Color bgOriginalColor;
     private Image portraitImageComponent;
+
+    private List<TextMeshProUGUI> _optionLabels = new List<TextMeshProUGUI>();
+    private float _rowHeight;
 
     // -------------------------------------------------------------------------
     // Awake — wiring and initial state
@@ -109,19 +144,16 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (portraitObject != null)
             portraitImageComponent = portraitObject.GetComponent<Image>();
 
-        // Make the portrait stretch to fill speakerRect so it scales with it automatically.
         SetPortraitStretch();
 
-        // Capture the resting position and scale from the layout — same pattern as DialogueBox.
         if (speakerRect != null)
         {
             originalPos = speakerRect.anchoredPosition;
-            // Park it off-screen; ShowNormal will slide it back up.
+            _originalSizeDelta = speakerRect.sizeDelta;
             speakerRect.anchoredPosition = originalPos + new Vector2(0f, -hiddenOffset);
         }
         originalLocalScale = transform.localScale;
 
-        // Start the focus background hidden.
         if (focusBackground != null)
         {
             bgOriginalColor = focusBackground.color;
@@ -131,24 +163,26 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             focusBackground.gameObject.SetActive(false);
         }
 
+        if (optionsContainer != null)
+            optionsContainer.gameObject.SetActive(false);
+
+        if (arrowIndicator != null)
+            arrowIndicator.gameObject.SetActive(false);
+
         gameObject.SetActive(false);
     }
 
-    // Sets the portrait to perfectly match the speakerRect, then scales it from the center.
     private void SetPortraitStretch()
     {
         if (portraitObject == null) return;
         var rt = portraitObject.GetComponent<RectTransform>();
         if (rt == null) return;
 
-        // First match the speaker box exactly without any pixel offsets
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
         rt.pivot     = new Vector2(0.5f, 0.5f);
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
-
-        // Then proportionally shrink from both sides via the middle
         rt.localScale = new Vector3(portraitScale, portraitScale, 1f);
     }
 
@@ -156,16 +190,16 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // Show / Hide — called by DialogueBox
     // -------------------------------------------------------------------------
 
-    // Slides the speaker in from below to its baked resting position.
     public void ShowNormal()
     {
+        // noSpeaker boxes are invisible during normal dialogue — only appear during questions
+        if (noSpeaker) return;
         if (speakerRect == null) return;
 
         gameObject.SetActive(true);
         isVisible = true;
         isFocused = false;
 
-        // Apply emotion immediately so the correct portrait shows on the first frame.
         SetEmotionForLine(0);
 
         Vector2 hiddenPos = originalPos + new Vector2(0f, -hiddenOffset);
@@ -186,7 +220,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         }
     }
 
-    // Slides the speaker out below and deactivates it.
     public void Hide()
     {
         if (!isVisible || speakerRect == null) return;
@@ -242,9 +275,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // Emotion / image selection
     // -------------------------------------------------------------------------
 
-    // Sets the portrait sprite for the given dialogue line index.
     public void SetEmotionForLine(int index)
     {
+        if (noSpeaker) return;
         if (portraitObject == null) return;
 
         if (portraitImageComponent == null)
@@ -272,6 +305,143 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     }
 
     // -------------------------------------------------------------------------
+    // Question mode
+    // -------------------------------------------------------------------------
+
+    // Called by QuestionBox when a question becomes active.
+    public void EnterQuestionMode(List<QuestionOption> options)
+    {
+        if (portraitObject != null)
+            portraitObject.SetActive(false);
+
+        foreach (var lbl in _optionLabels)
+            if (lbl != null) Destroy(lbl.gameObject);
+        _optionLabels.Clear();
+
+        if (optionsContainer == null || options == null || options.Count == 0) return;
+
+        optionsContainer.gameObject.SetActive(true);
+
+        // Row height derived from font; store so SelectOption can use it
+        _rowHeight = optionFontSize * 1.4f;
+        float contentHeight = _rowHeight * options.Count
+                            + optionRowSpacing * Mathf.Max(0, options.Count - 1)
+                            + optionVerticalPadding * 2f;
+
+        // Resize to exactly fit content, keeping the bottom edge fixed.
+        // Uses rect.height (actual rendered pixels) so it works for both stretched and fixed rects.
+        if (speakerRect != null)
+        {
+            float currentHeight = speakerRect.rect.height;
+            float bottomEdge = originalPos.y - currentHeight * speakerRect.pivot.y;
+            speakerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, contentHeight);
+            float newAnchorY = bottomEdge + contentHeight * speakerRect.pivot.y;
+            speakerRect.anchoredPosition = new Vector2(originalPos.x, newAnchorY);
+        }
+
+        // noSpeaker: box was hidden during dialogue — slide in from below to its resting position
+        if (noSpeaker && speakerRect != null)
+        {
+            gameObject.SetActive(true);
+            isVisible = true;
+            Vector2 restingPos = speakerRect.anchoredPosition;
+            Vector2 hiddenPos = restingPos + new Vector2(0f, -hiddenOffset);
+            speakerRect.anchoredPosition = hiddenPos;
+            StartMove(hiddenPos, restingPos, showDuration);
+        }
+
+        // Labels anchor to the bottom of the container and stack upward
+        for (int i = 0; i < options.Count; i++)
+        {
+            var go = new GameObject($"Option_{i}", typeof(RectTransform));
+            go.transform.SetParent(optionsContainer, false);
+
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            tmp.text = options[i].label;
+            tmp.color = optionTextColor;
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.fontSize = optionFontSize;
+            if (optionFont != null) tmp.font = optionFont;
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(1f, 0f);
+            rt.pivot = new Vector2(0f, 0f);
+            // Build upward: option 0 at top, last option sitting on the bottom padding
+            float bottomY = optionVerticalPadding + (options.Count - 1 - i) * (_rowHeight + optionRowSpacing);
+            rt.anchoredPosition = new Vector2(optionLabelLeftPadding, bottomY);
+            rt.sizeDelta = new Vector2(-optionLabelLeftPadding, _rowHeight);
+
+            _optionLabels.Add(tmp);
+        }
+
+        if (arrowIndicator != null)
+        {
+            // Bottom anchor + center pivot so arrow centers on a row using label.y + rowHeight*0.5
+            arrowIndicator.anchorMin = new Vector2(arrowIndicator.anchorMin.x, 0f);
+            arrowIndicator.anchorMax = new Vector2(arrowIndicator.anchorMax.x, 0f);
+            arrowIndicator.pivot = new Vector2(arrowIndicator.pivot.x, 0.5f);
+            arrowIndicator.gameObject.SetActive(true);
+            SelectOption(0);
+        }
+    }
+
+    // Called by QuestionBox when the question is answered or force-closed.
+    public void ExitQuestionMode()
+    {
+        foreach (var lbl in _optionLabels)
+            if (lbl != null) Destroy(lbl.gameObject);
+        _optionLabels.Clear();
+
+        if (optionsContainer != null)
+            optionsContainer.gameObject.SetActive(false);
+
+        if (arrowIndicator != null)
+            arrowIndicator.gameObject.SetActive(false);
+
+        if (noSpeaker)
+        {
+            // Box was only shown for this question — slide it out and deactivate
+            isVisible = false;
+            if (speakerRect != null)
+            {
+                Vector2 startPos = speakerRect.anchoredPosition;
+                StartMove(startPos, startPos + new Vector2(0f, -hiddenOffset), hideDuration, () =>
+                {
+                    speakerRect.sizeDelta = _originalSizeDelta;
+                    speakerRect.anchoredPosition = originalPos;
+                    gameObject.SetActive(false);
+                });
+            }
+            return;
+        }
+
+        // Restore box to original size and position, re-show portrait
+        if (speakerRect != null)
+        {
+            speakerRect.sizeDelta = _originalSizeDelta;
+            speakerRect.anchoredPosition = originalPos;
+        }
+
+        if (portraitObject != null)
+            portraitObject.SetActive(true);
+    }
+
+    // Moves the arrow to vertically center on the option at the given index.
+    public void SelectOption(int index)
+    {
+        if (arrowIndicator == null || _optionLabels.Count == 0) return;
+        if (index < 0 || index >= _optionLabels.Count) return;
+
+        // Label pivot is bottom (y=0), arrow pivot is center (y=0.5)
+        // So arrow center = label bottom + half row height
+        float arrowY = _optionLabels[index].rectTransform.anchoredPosition.y + _rowHeight * 0.5f;
+        arrowIndicator.anchoredPosition = new Vector2(arrowIndicator.anchoredPosition.x, arrowY);
+    }
+
+    public int GetOptionCount() => _optionLabels.Count;
+
+    // -------------------------------------------------------------------------
     // Movement helpers
     // -------------------------------------------------------------------------
 
@@ -281,7 +451,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         moveCoroutine = StartCoroutine(SlideSpeaker(from, to, duration, onComplete));
     }
 
-    // Slides speakerRect from one position to another with an ease-out cubic curve.
     private IEnumerator SlideSpeaker(Vector2 from, Vector2 to, float duration, System.Action onComplete = null)
     {
         duration = Mathf.Max(0.01f, duration);
@@ -308,7 +477,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         scaleCoroutine = StartCoroutine(ScaleSpeaker(from, to, duration));
     }
 
-    // Smoothly scales the speaker's localScale with the same ease-out cubic.
     private IEnumerator ScaleSpeaker(Vector3 from, Vector3 to, float duration)
     {
         duration = Mathf.Max(0.01f, duration);
@@ -368,7 +536,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        // This ensures that when you adjust the slider in the Inspector, the image scales in real-time.
         if (portraitObject != null)
         {
             UnityEditor.EditorApplication.delayCall += () =>

@@ -472,11 +472,10 @@ public class DialogueBox : MonoBehaviour
         // Detach advance input so it can't fire while the question is open
         advanceInput.started -= OnAdvanceInput;
 
-        // Remember if the speaker was visible BEFORE hiding it so we know whether to restore it after.
-        bool speakerWasActive = speakerBoxController != null && speakerBoxController.gameObject.activeSelf;
+        // Wire the speaker box to the question box so it can display options
+        if (questionBoxController is QuestionBox qb && speakerBoxController is SpeakerBox sb)
+            qb.SetSpeakerBox(sb);
 
-        SpeakerHide();
-        Debug.Log("Showing question");
         var showMethod = questionBoxController.GetType().GetMethod("ShowQuestion");
         showMethod?.Invoke(questionBoxController, new object[] { question });
 
@@ -488,16 +487,10 @@ public class DialogueBox : MonoBehaviour
         // Re-attach advance input
         advanceInput.started += OnAdvanceInput;
 
-        // If more lines remain, continue; otherwise close
+        // Speaker never hid — just update emotion for the next line and continue
         if (currentDialogueIndex < dialogueQueue.Count)
         {
-            // Only restore the speaker portrait if it was showing before the question
-            if (speakerWasActive)
-            {
-                SpeakerShowNormal();
-                SpeakerSetEmotionForLine(currentDialogueIndex);
-            }
-            Debug.Log("Displaying text");
+            SpeakerSetEmotionForLine(currentDialogueIndex);
             StartDisplayingText();
         }
         else

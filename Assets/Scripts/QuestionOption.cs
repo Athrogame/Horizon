@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine.Events;
 
 [System.Serializable]
@@ -10,6 +11,9 @@ public class QuestionOption
 [System.Serializable]
 public class QuestionData
 {
-    public QuestionOption optionA = new QuestionOption { label = "Yes" };
-    public QuestionOption optionB = new QuestionOption { label = "No" };
+    public List<QuestionOption> options = new List<QuestionOption>
+    {
+        new QuestionOption { label = "Yes" },
+        new QuestionOption { label = "No" }
+    };
 }
