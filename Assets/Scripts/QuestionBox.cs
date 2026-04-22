@@ -63,18 +63,21 @@ public class QuestionBox : MonoBehaviour
     {
         if (navigateAction != null)
         {
-            navigateAction.action.started += OnNavigate;
+            navigateAction.action.performed += OnNavigate;
             navigateAction.action.Enable();
         }
 
         if (confirmAction != null)
+        {
             confirmAction.action.started += OnConfirm;
+            confirmAction.action.Enable();
+        }
     }
 
     private void UnsubscribeInput()
     {
         if (navigateAction != null)
-            navigateAction.action.started -= OnNavigate;
+            navigateAction.action.performed -= OnNavigate;
 
         if (confirmAction != null)
             confirmAction.action.started -= OnConfirm;

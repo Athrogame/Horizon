@@ -249,8 +249,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 946, y: 480}
-  m_SizeDelta: {x: -2028.28, y: 44.8}
+  m_AnchoredPosition: {x: 964.91046, y: 481.7191}
+  m_SizeDelta: {x: -2058.537, y: 42.049}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6940744366118380843
 CanvasRenderer:
@@ -318,8 +318,8 @@ MonoBehaviour:
   noSpeaker: 0
   optionsContainer: {fileID: 2841052945942507786}
   optionFont: {fileID: 11400000, guid: 484bd5b2051bf9e4e980395ce3b3ed0e, type: 2}
-  optionHeight: 60
   optionFontSize: 60
+  optionRowSpacing: 8
   optionVerticalPadding: 12
   optionLabelLeftPadding: 40
   optionTextColor: {r: 1, g: 1, b: 1, a: 1}
@@ -379,8 +379,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6865286525747712862}
   - component: {fileID: 1202567685035797343}
-  - component: {fileID: 5218512944866801327}
   - component: {fileID: 2107938774884628232}
+  - component: {fileID: 4108804915029339745}
   m_Layer: 5
   m_Name: Question PAnel
   m_TagString: Untagged
@@ -415,7 +415,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4355141341309628680}
   m_CullTransparentMesh: 1
---- !u!114 &5218512944866801327
+--- !u!114 &2107938774884628232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355141341309628680}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52b4be66693954584bb1431d395c2144, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestionBox
+  navigateAction: {fileID: -1680190386980627800, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  confirmAction: {fileID: 1781555164194001046, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  speakerBox: {fileID: 6761229720977948407}
+--- !u!114 &4108804915029339745
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -445,21 +460,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2107938774884628232
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4355141341309628680}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 52b4be66693954584bb1431d395c2144, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::QuestionBox
-  navigateAction: {fileID: -1680190386980627800, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
-  confirmAction: {fileID: 1781555164194001046, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
-  speakerBox: {fileID: 0}
 --- !u!1 &5787033973609899554
 GameObject:
   m_ObjectHideFlags: 0
@@ -722,7 +722,7 @@ MonoBehaviour:
   hiddenOffset: 1200
   dialogueLines: []
   speakerBoxController: {fileID: 6761229720977948407}
-  questionBoxController: {fileID: 5218512944866801327}
+  questionBoxController: {fileID: 2107938774884628232}
 --- !u!1 &8695403046206921474
 GameObject:
   m_ObjectHideFlags: 0

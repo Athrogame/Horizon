@@ -92,6 +92,25 @@ public class DialogueBox : MonoBehaviour
     private Coroutine slideAnimationCoroutine;
     private InputAction advanceInput;
 
+    private static int activeDialogueCount = 0;
+    private bool isCountedAsActive = false;
+    private bool ignoreAdvanceInput = false;
+    private Coroutine questionRoutine;
+
+    private void SetActiveCount(bool active)
+    {
+        if (active && !isCountedAsActive)
+        {
+            activeDialogueCount++;
+            isCountedAsActive = true;
+        }
+        else if (!active && isCountedAsActive)
+        {
+            activeDialogueCount = Mathf.Max(0, activeDialogueCount - 1);
+            isCountedAsActive = false;
+        }
+    }
+
     // Guard so multiple ShowDialogue calls in one cutscene don't stack extra locks.
     // DialogueBox should only ever hold one movement lock at a time.
     private bool _hasMovementLock = false;
@@ -103,8 +122,6 @@ public class DialogueBox : MonoBehaviour
 
     private void Awake()
     {
-        if (hiddenOffset < 5000f) hiddenOffset = 5000f;
-
         rectTransform = GetComponent<RectTransform>();
         if (rectTransform == null)
         {
@@ -162,6 +179,7 @@ public class DialogueBox : MonoBehaviour
 
     private void OnDisable()
     {
+        SetActiveCount(false);
         if (advanceInput != null)
         {
             advanceInput.started -= OnAdvanceInput;
@@ -173,6 +191,7 @@ public class DialogueBox : MonoBehaviour
 
     private void OnAdvanceInput(InputAction.CallbackContext ctx)
     {
+        if (ignoreAdvanceInput) return;
         if (Time.time < skipAllowedTime) return;
 
         if (isDisplayingText)
@@ -197,6 +216,9 @@ public class DialogueBox : MonoBehaviour
 
     public void ShowDialogue(List<DialogueLine> lines)
     {
+        SetActiveCount(true);
+        ignoreAdvanceInput = false;
+
         if (lines == null || lines.Count == 0)
         {
             Debug.LogWarning("DialogueBox: No messages provided.");
@@ -207,14 +229,15 @@ public class DialogueBox : MonoBehaviour
         currentDialogueIndex = 0;
         baseTextBeforeAppending = "";
 
-        // Ensure this object and parents are active
-        Transform t = transform;
-        while (t != null)
-        {
+        // Activate root-to-child so each SetActive fires OnEnable with an already-active parent,
+        // guaranteeing gameObject.activeInHierarchy is true before StartCoroutine is called.
+        var ancestorChain = new System.Collections.Generic.List<Transform>();
+        for (Transform t = transform; t != null; t = t.parent)
+            ancestorChain.Add(t);
+        ancestorChain.Reverse();
+        foreach (var t in ancestorChain)
             if (!t.gameObject.activeSelf)
                 t.gameObject.SetActive(true);
-            t = t.parent;
-        }
 
         if (dialogueText != null)
             dialogueText.text = "";
@@ -228,7 +251,18 @@ public class DialogueBox : MonoBehaviour
 
         if (slideAnimationCoroutine != null)
             StopCoroutine(slideAnimationCoroutine);
-        slideAnimationCoroutine = StartCoroutine(ShowDialogueAndSlideUp());
+        if (questionRoutine != null)
+            StopCoroutine(questionRoutine);
+        
+        // If the box is already fairly close to its visible position, don't teleport it to slide up again.
+        if (gameObject.activeInHierarchy && Vector2.Distance(rectTransform.anchoredPosition, visiblePosition) < 50f)
+        {
+            StartDisplayingText();
+        }
+        else
+        {
+            slideAnimationCoroutine = StartCoroutine(ShowDialogueAndSlideUp());
+        }
 
         // Let speaker controller know dialogue started
         SpeakerShowNormal();
@@ -261,6 +295,8 @@ public class DialogueBox : MonoBehaviour
     {
         if (typewriterCoroutine != null)
             StopCoroutine(typewriterCoroutine);
+        if (questionRoutine != null)
+            StopCoroutine(questionRoutine);
 
         dialogueQueue.Clear();
         currentDialogueIndex = 0;
@@ -277,8 +313,13 @@ public class DialogueBox : MonoBehaviour
             _hasMovementLock = false;
         }
 
+        SetActiveCount(false);
+
         // Tell speaker to slide out
-        SpeakerHide();
+        if (activeDialogueCount == 0)
+        {
+            SpeakerHide();
+        }
 
         onDialogueClosed?.Invoke();
 
@@ -298,6 +339,8 @@ public class DialogueBox : MonoBehaviour
     {
         return gameObject.activeSelf && dialogueQueue.Count > 0;
     }
+
+    public static bool AnyActive => activeDialogueCount > 0;
 
     // SpeakerBox is driven via reflection to avoid compile-time coupling.
     private void SpeakerShowNormal()
@@ -414,6 +457,23 @@ public class DialogueBox : MonoBehaviour
         }
 
         isDisplayingText = false;
+
+        if (line.showQuestionAfterLine && questionBoxController != null)
+        {
+            canAdvance = false;
+            if (continueIndicator != null) continueIndicator.SetActive(false);
+
+            int finishedIndex = currentDialogueIndex;
+            currentDialogueIndex++;
+            if (finishedIndex < dialogueQueue.Count)
+            {
+                dialogueQueue[finishedIndex].onLineFinished?.Invoke();
+            }
+
+            questionRoutine = StartCoroutine(ShowQuestionRoutine(line.question));
+            yield break;
+        }
+
         canAdvance = true;
 
         if (continueIndicator != null)
@@ -455,22 +515,12 @@ public class DialogueBox : MonoBehaviour
             dialogueQueue[finishedIndex].onLineFinished?.Invoke();
         }
 
-        // If this line has a question attached, show it before continuing
-        if (finishedIndex < dialogueQueue.Count &&
-            dialogueQueue[finishedIndex].showQuestionAfterLine &&
-            questionBoxController != null)
-        {
-            StartCoroutine(ShowQuestionRoutine(dialogueQueue[finishedIndex].question));
-            return;
-        }
-
         StartDisplayingText();
     }
 
     private IEnumerator ShowQuestionRoutine(QuestionData question)
     {
-        // Detach advance input so it can't fire while the question is open
-        advanceInput.started -= OnAdvanceInput;
+        ignoreAdvanceInput = true;
 
         // Wire the speaker box to the question box so it can display options
         if (questionBoxController is QuestionBox qb && speakerBoxController is SpeakerBox sb)
@@ -482,10 +532,11 @@ public class DialogueBox : MonoBehaviour
         // Poll until the question box signals it is answered (IsActive returns false)
         var isActiveMethod = questionBoxController.GetType().GetMethod("IsActive");
         while (isActiveMethod != null && (bool)isActiveMethod.Invoke(questionBoxController, null))
+        {
             yield return null;
+        }
 
-        // Re-attach advance input
-        advanceInput.started += OnAdvanceInput;
+        ignoreAdvanceInput = false;
 
         // Speaker never hid — just update emotion for the next line and continue
         if (currentDialogueIndex < dialogueQueue.Count)

@@ -49,8 +49,10 @@ public class InteractTrigger : MonoBehaviour
         if (!playerInside) return;
         if (!IsPlayerFacingMe()) return;
 
+        if (DialogueBox.AnyActive) return;
+
         DialogueBox target = (useRepeatDialogue && hasInteractedOnce) ? repeatDialogueBox : dialogueBox;
-        if (target == null || target.IsDialogueActive()) return;
+        if (target == null) return;
 
         hasInteractedOnce = true;
         target.StartDialogue();
