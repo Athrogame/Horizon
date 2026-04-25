@@ -1272,7 +1272,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 6.7760415
+  orthographic size: 7.546875
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1388,7 +1388,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &519624007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3854,9 +3854,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   doorToSpawnAt: 0
   transitionAnim: {fileID: 1047845605}
-  fadeOutDuration: 0.7
-  holdDuration: 0.5
-  fadeInDuration: 0.7
+  fadeOutDuration: 1
+  holdDuration: 0
+  fadeInDuration: 1
 --- !u!4 &1435107330
 Transform:
   m_ObjectHideFlags: 0
@@ -5870,7 +5870,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 4.025488, y: 0.5614268}
+  m_Offset: {x: 3.9776306, y: 0.5306612}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -5880,7 +5880,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.6095295, y: 1.8386365}
+  m_Size: {x: 1.513814, y: 1.9001677}
   m_EdgeRadius: 0
 --- !u!1 &2103015561
 GameObject:
@@ -6221,6 +6221,14 @@ PrefabInstance:
     - target: {fileID: 7640692894507740948, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
       propertyPath: m_Name
       value: SpawnLocations
+      objectReference: {fileID: 0}
+    - target: {fileID: 8781521605990182269, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
+      propertyPath: m_Size.x
+      value: 0.7292162
+      objectReference: {fileID: 0}
+    - target: {fileID: 8781521605990182269, guid: 9049fe29819fb4c1c84d2b4115b4a19a, type: 3}
+      propertyPath: m_Offset.x
+      value: -0.015928432
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

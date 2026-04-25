@@ -65,8 +65,10 @@ public class SceneMgr : MonoBehaviour
     {
         transitionAnim.SetTrigger("end");
         yield return new WaitForSecondsRealtime(fadeOutDuration);
-
-        DoLoadScene(sceneIndex);
+        if(transitionAnim.GetCurrentAnimatorStateInfo(0).IsName("end")){
+            DoLoadScene(sceneIndex);
+        }
+        
 
         // Hold on black so the player spawns & repositions before anything is visible.
         yield return new WaitForSecondsRealtime(holdDuration);
