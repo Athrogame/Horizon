@@ -1272,7 +1272,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 7.546875
+  orthographic size: 7.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1388,7 +1388,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &519624007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1837,12 +1837,16 @@ PrefabInstance:
       objectReference: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
     - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: emotionEntries.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: emotionEntries.Array.data[0].sprite
       value: 
-      objectReference: {fileID: -4692248549063689807, guid: ebc5bcdba802d4fb0a83d13c031e43ea, type: 3}
+      objectReference: {fileID: 21300000, guid: ebc5bcdba802d4fb0a83d13c031e43ea, type: 3}
+    - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
+      propertyPath: emotionEntries.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: ebc5bcdba802d4fb0a83d13c031e43ea, type: 3}
     - target: {fileID: 7308976425701202401, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2436,7 +2440,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 43fd190b6c1a0470b9624c986494fbe1, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 6068101805a76204680ae6e456ab5943, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6041,6 +6045,26 @@ PrefabInstance:
       propertyPath: focusBackground
       value: 
       objectReference: {fileID: 428646086}
+    - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
+      propertyPath: emotionEntries.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
+      propertyPath: emotionEntries.Array.data[0].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d52bd1652a0266441b5770326989ddde, type: 3}
+    - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
+      propertyPath: emotionEntries.Array.data[1].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d52bd1652a0266441b5770326989ddde, type: 3}
+    - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
+      propertyPath: emotionEntries.Array.data[2].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d52bd1652a0266441b5770326989ddde, type: 3}
+    - target: {fileID: 6761229720977948407, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
+      propertyPath: emotionEntries.Array.data[3].sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: d52bd1652a0266441b5770326989ddde, type: 3}
     - target: {fileID: 7308976425701202401, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

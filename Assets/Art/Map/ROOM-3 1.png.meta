@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ebc5bcdba802d4fb0a83d13c031e43ea
+guid: 6068101805a76204680ae6e456ab5943
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4692248549063689807
-    second: IMG_0034_0
+      213: 4754324295239671483
+    second: ROOM-3 1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -37,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 32
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: IMG_0034_0
+      name: ROOM-3 1_0
       rect:
         serializedVersion: 2
-        x: 37
+        x: 0
         y: 0
-        width: 513
-        height: 523
+        width: 352
+        height: 192
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1b977332ec8c1eeb0800000000000000
-      internalID: -4692248549063689807
+      spriteID: bbe15ccc1c0caf140800000000000000
+      internalID: 4754324295239671483
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      IMG_0034_0: -4692248549063689807
+      ROOM-3 1_0: 4754324295239671483
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
