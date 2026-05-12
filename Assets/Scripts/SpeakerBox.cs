@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 public class SpeakerBox : MonoBehaviour, ISpeakerBox
 {
@@ -18,10 +15,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
     [Tooltip("The child GameObject that holds the portrait Image. Auto-wires to the first non-background Image child if left empty.")]
     public GameObject portraitObject;
-
-    [Tooltip("Relative uniform scale of the portrait. Use this to shrink the image slightly (e.g., 0.92) to fit nicely within custom parent borders in both normal and focus modes.")]
-    [Range(0.5f, 1f)]
-    public float portraitScale = 0.92f;
 
     // -------------------------------------------------------------------------
     // Emotion / image entries
@@ -99,6 +92,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     [Tooltip("Arrow indicator that points at the currently selected option. Should be a child of optionsContainer.")]
     public RectTransform arrowIndicator;
 
+    [Tooltip("Extra vertical offset for the selection arrow on top of the row's geometric center. Positive raises the arrow; negative lowers it. Adjust until the arrow lines up with the highlighted option's text.")]
+    public float arrowYOffset = 0f;
+
     // -------------------------------------------------------------------------
     // Private state
     // -------------------------------------------------------------------------
@@ -144,8 +140,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (portraitObject != null)
             portraitImageComponent = portraitObject.GetComponent<Image>();
 
-        SetPortraitStretch();
-
         if (speakerRect != null)
         {
             originalPos = speakerRect.anchoredPosition;
@@ -170,20 +164,6 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             arrowIndicator.gameObject.SetActive(false);
 
         gameObject.SetActive(false);
-    }
-
-    private void SetPortraitStretch()
-    {
-        if (portraitObject == null) return;
-        var rt = portraitObject.GetComponent<RectTransform>();
-        if (rt == null) return;
-
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        rt.pivot     = new Vector2(0.5f, 0.5f);
-        rt.offsetMin = Vector2.zero;
-        rt.offsetMax = Vector2.zero;
-        rt.localScale = new Vector3(portraitScale, portraitScale, 1f);
     }
 
     // -------------------------------------------------------------------------
@@ -359,7 +339,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             var tmp = go.AddComponent<TextMeshProUGUI>();
             tmp.text = options[i].label;
             tmp.color = optionTextColor;
-            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.alignment = TextAlignmentOptions.MidlineLeft;
             tmp.fontSize = optionFontSize;
             if (optionFont != null) tmp.font = optionFont;
 
@@ -433,9 +413,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (arrowIndicator == null || _optionLabels.Count == 0) return;
         if (index < 0 || index >= _optionLabels.Count) return;
 
-        // Label pivot is bottom (y=0), arrow pivot is center (y=0.5)
-        // So arrow center = label bottom + half row height
-        float arrowY = _optionLabels[index].rectTransform.anchoredPosition.y + _rowHeight * 0.5f;
+        float arrowY = _optionLabels[index].rectTransform.anchoredPosition.y
+                     + _rowHeight * 0.5f
+                     + arrowYOffset;
         arrowIndicator.anchoredPosition = new Vector2(arrowIndicator.anchoredPosition.x, arrowY);
     }
 
@@ -532,18 +512,4 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         if (disableOnComplete && Mathf.Approximately(to, 0f))
             focusBackground.gameObject.SetActive(false);
     }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (portraitObject != null)
-        {
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-                if (this == null || portraitObject == null) return;
-                SetPortraitStretch();
-            };
-        }
-    }
-#endif
 }

@@ -1,16 +1,10 @@
 fileFormatVersion: 2
-guid: d52bd1652a0266441b5770326989ddde
+guid: 6a95550ec02b24641808b5f6d265998f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8441340505516815171
-    second: Scanned_Documents-3_0
-  - first:
-      213: 5927733861228165426
-    second: Scanned_Documents-3_1
-  - first:
-      213: 3617985641321729234
-    second: Scanned_Documents-3_2
+      213: -4148089393515895940
+    second: Scanned_Documents 1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -43,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 1
+    filterMode: 0
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -52,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -81,7 +75,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 2
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -132,67 +126,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Scanned_Documents-3_0
+      name: Scanned_Documents 1_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 550
-        height: 550
+        y: 1
+        width: 221
+        height: 228
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3433273377aa52570800000000000000
-      internalID: 8441340505516815171
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Scanned_Documents-3_1
-      rect:
-        serializedVersion: 2
-        x: 503
-        y: 364
-        width: 11
-        height: 14
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 2393f815a8a834250800000000000000
-      internalID: 5927733861228165426
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Scanned_Documents-3_2
-      rect:
-        serializedVersion: 2
-        x: 54
-        y: 167
-        width: 9
-        height: 11
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 2dc027995caa53230800000000000000
-      internalID: 3617985641321729234
+      spriteID: c736be29ca60f66c0800000000000000
+      internalID: -4148089393515895940
       vertices: []
       indices: 
       edges: []
@@ -201,7 +151,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 4539e74db936e5e40ac6180ab439dffc
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -211,9 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Scanned_Documents-3_0: 8441340505516815171
-      Scanned_Documents-3_1: 5927733861228165426
-      Scanned_Documents-3_2: 3617985641321729234
+      Scanned_Documents 1_0: -4148089393515895940
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

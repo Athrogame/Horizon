@@ -10,6 +10,8 @@ public class DialogueLine
 {
     [TextArea(3, 10)]
     public string text;
+    [Tooltip("Name shown in the NameBox for this line. Leave empty to hide the NameBox for this line (e.g. narration).")]
+    public string speakerName = "";
     [Tooltip("If checked, this text will append to the end of the previous text box instead of clearing it.")]
     public bool appendToPrevious = false;
     [Tooltip("Delay in seconds from the time this line starts before the player is allowed to skip typing or advance.")]
@@ -76,6 +78,10 @@ public class DialogueBox : MonoBehaviour
     [Header("Speaker Controller (new script)")]
     [Tooltip("Drag the GameObject that has SpeakerBox on it here.")]
     public MonoBehaviour speakerBoxController; // SpeakerBox component (runtime-called)
+
+    [Header("Name Box (Optional)")]
+    [Tooltip("Drag the GameObject that has NameBox on it here.")]
+    public MonoBehaviour nameBoxController;
 
     [Header("Question Box (Optional)")]
     [Tooltip("Drag the GameObject that has QuestionBox on it here.")]
@@ -158,7 +164,11 @@ public class DialogueBox : MonoBehaviour
             continueIndicator.SetActive(false);
 
         rectTransform.anchoredPosition = hiddenPosition;
-        gameObject.SetActive(false);
+        
+        if (dialogueQueue == null || dialogueQueue.Count == 0)
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private void OnEnable()
@@ -266,6 +276,9 @@ public class DialogueBox : MonoBehaviour
 
         // Let speaker controller know dialogue started
         SpeakerShowNormal();
+
+        // Set the first line's name now so the NameBox is in place before the panel slides up.
+        NameBoxSetNameForLine(0);
     }
 
     public void ShowDialogue(List<string> messages)
@@ -368,6 +381,15 @@ public class DialogueBox : MonoBehaviour
             m.Invoke(speakerBoxController, new object[] { index });
     }
 
+    private void NameBoxSetNameForLine(int index)
+    {
+        if (nameBoxController == null)
+            return;
+        var m = nameBoxController.GetType().GetMethod("SetNameForLine");
+        if (m != null)
+            m.Invoke(nameBoxController, new object[] { index });
+    }
+
     // --- Internals ---------------------------------------------------------
 
     private IEnumerator ShowDialogueAndSlideUp()
@@ -397,6 +419,7 @@ public class DialogueBox : MonoBehaviour
         skipAllowedTime = Time.time + line.delayBeforeSkipAllowed;
 
         SpeakerSetEmotionForLine(currentDialogueIndex);
+        NameBoxSetNameForLine(currentDialogueIndex);
 
         if (typewriterCoroutine != null)
             StopCoroutine(typewriterCoroutine);

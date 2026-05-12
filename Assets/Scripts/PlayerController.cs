@@ -39,11 +39,6 @@ public class PlayerController : MonoBehaviour
     private float lastMoveX = 0f;
     private float lastMoveY = -1f;
 
-    // Actual velocity from the previous physics step — used to detect wall collisions.
-    // rb.linearVelocity after we assign it reflects the *requested* velocity; the physics
-    // engine only resolves contacts on the next step, so we cache the result here.
-    private Vector2 prevVelocity = Vector2.zero;
-
     // Reference-counted movement lock.
     // Call LockMovement() to lock and UnlockMovement() to release.
     // Movement is only re-enabled when every lock has been released,
@@ -179,14 +174,15 @@ public class PlayerController : MonoBehaviour
             // Flush any input the player pressed during the cutscene so it
             // doesn't carry over the moment the lock is lifted.
             moveInput = Vector2.zero;
-            prevVelocity = Vector2.zero;
-
             rb.linearVelocity = Vector2.zero;
-
-            // Ensure the animator is in idle while movement is locked.
             ForceIdle();
             return;
         }
+
+        // Read velocity BEFORE reassigning — at the top of FixedUpdate, rb.linearVelocity
+        // reflects what physics resolved on the previous step (zero when blocked by a wall),
+        // not the requested velocity we wrote ourselves.
+        Vector2 actualVelocity = rb.linearVelocity;
 
         Vector2 input = moveInput;
         if (input.sqrMagnitude < MoveDeadzone)
@@ -194,39 +190,24 @@ public class PlayerController : MonoBehaviour
 
         Vector2 cardinal = input == Vector2.zero ? Vector2.zero : ToCardinal(input);
 
-        // Set velocity directly — no Lerp, no smoothing.
-        // Lerp-based acceleration keeps the player at a fractional velocity
-        // every frame, which maps to a non-integer pixel offset after physics
-        // integrates the position.  Direct velocity means the player moves
-        // exactly (moveSpeed / PPU) pixels per physics step — always grid-aligned.
         rb.linearVelocity = cardinal * moveSpeed;
 
-        // Drive animations using ACTUAL velocity from the previous physics step.
-        // This ensures that when the player holds input into a wall, the physics
-        // engine's contact resolution (which zeroes the blocked velocity) is
-        // reflected in the animation — preventing the walk cycle from playing
-        // while standing still against a collider.
         if (animator != null)
         {
-            // A wall blocks movement when input is held but real velocity is near zero.
-            bool isMoving = prevVelocity.sqrMagnitude > MoveDeadzone * MoveDeadzone;
+            bool isMoving = actualVelocity.sqrMagnitude > MoveDeadzone * MoveDeadzone;
 
-            // Update facing direction from INPUT (not velocity), so the idle pose
-            // always faces the last direction the player tried to move.
+            // Facing is driven by input so the idle pose still faces whichever way
+            // the player is pressing into a wall.
             if (cardinal != Vector2.zero)
             {
                 lastMoveX = cardinal.x;
                 lastMoveY = cardinal.y;
             }
-            // When idle / wall-blocked, keep previous lastMoveX/Y for correct idle facing pose.
 
             animator.SetBool(IsMoving, isMoving);
             animator.SetFloat(MoveX, lastMoveX);
             animator.SetFloat(MoveY, lastMoveY);
         }
-
-        // Cache this step's actual velocity so the NEXT step can detect wall collisions.
-        prevVelocity = rb.linearVelocity;
     }
 
     /// <summary>

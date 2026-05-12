@@ -56,10 +56,20 @@ public class SceneMgr : MonoBehaviour
     /// </summary>
     public void LoadScene(int sceneIndex)
     {
+        // Freeze the player the instant the trigger fires; released after the fade-in.
+        if (PlayerController.I != null)
+            PlayerController.I.LockMovement();
+
         if (transitionAnim != null)
+        {
             StartCoroutine(LoadSceneWithTransition(sceneIndex));
+        }
         else
+        {
             DoLoadScene(sceneIndex);
+            if (PlayerController.I != null)
+                PlayerController.I.UnlockMovement();
+        }
     }
     private IEnumerator LoadSceneWithTransition(int sceneIndex)
     {
@@ -68,7 +78,7 @@ public class SceneMgr : MonoBehaviour
         if(transitionAnim.GetCurrentAnimatorStateInfo(0).IsName("end")){
             DoLoadScene(sceneIndex);
         }
-        
+
 
         // Hold on black so the player spawns & repositions before anything is visible.
         yield return new WaitForSecondsRealtime(holdDuration);
@@ -76,6 +86,12 @@ public class SceneMgr : MonoBehaviour
         // Fade back in — play from the beginning at a speed scaled to fadeInDuration.
         // Speed = 1 means the clip plays at its authored length; scale accordingly.
         transitionAnim.Play("New Animation", 0, 0f);
+
+        // Hold the player frozen until the fade-in animation finishes.
+        yield return new WaitForSecondsRealtime(fadeInDuration);
+
+        if (PlayerController.I != null)
+            PlayerController.I.UnlockMovement();
     }
 
     private void DoLoadScene(int sceneIndex)
@@ -85,6 +101,8 @@ public class SceneMgr : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        StartCoroutine(RebindScreenSpaceCanvases());
+
         var spawnPoints = Object.FindAnyObjectByType<DoorSpawnPoints>();
         if (spawnPoints == null || PlayerController.I == null || spawnPoints.SpawnLocations.Count == 0)
             return;
@@ -95,6 +113,36 @@ public class SceneMgr : MonoBehaviour
         PlayerController.I.transform.position = spawnPoints.SpawnLocations[index].position;
 
         TryApplySpawnFacing(spawnPoints, index);
+    }
+
+    // Screen Space - Camera canvases keep a stale (Missing) camera reference after a
+    // scene reload, so they fall back to Overlay-style rendering at the wrong scale.
+    // Re-find the live scene camera by tag (not Camera.main — its cache can be stale)
+    // and reassign worldCamera on every SS-Camera canvas unconditionally.
+    private IEnumerator RebindScreenSpaceCanvases()
+    {
+        yield return null;
+
+        Camera targetCam = null;
+        var cams = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (var cam in cams)
+        {
+            if (cam.CompareTag("MainCamera"))
+            {
+                targetCam = cam;
+                break;
+            }
+        }
+        if (targetCam == null && cams.Length > 0)
+            targetCam = cams[0];
+        if (targetCam == null) yield break;
+
+        var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var c in canvases)
+        {
+            if (c.renderMode != RenderMode.ScreenSpaceCamera) continue;
+            c.worldCamera = targetCam;
+        }
     }
 
     private void TryApplySpawnFacing(DoorSpawnPoints spawnPoints, int index)
