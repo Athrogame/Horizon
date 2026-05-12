@@ -25,32 +25,9 @@ public class CutsceneManager : MonoBehaviour
 
     private void Start()
     {
-        // Re-apply state-setting actions from already-played play-once cutscenes so
-        // objects this cutscene activated/deactivated keep their post-cutscene state
-        // when the scene is reloaded.
-        if (playOnlyOnce
-            && !string.IsNullOrEmpty(cutsceneID)
-            && PlayerPrefs.GetInt(cutsceneID, 0) == 1)
-        {
-            ApplyPersistentEffects();
-        }
-
         // Guard against double-fire if both flags are set.
         if (playOnStart && !playOnEnable)
             StartCoroutine(DelayedStart());
-    }
-
-    private void ApplyPersistentEffects()
-    {
-        foreach (var action in cutsceneActions)
-        {
-            if (action == null) continue;
-            if (action.actionType == CutsceneActionType.SetActive
-                && action.targetGameObject != null)
-            {
-                action.targetGameObject.SetActive(action.setActiveState);
-            }
-        }
     }
 
     private void OnEnable()
@@ -60,9 +37,12 @@ public class CutsceneManager : MonoBehaviour
     }
 
     // One-frame delay so all Awake/Start methods finish before the cutscene begins.
+    // Uses `yield return null` (one Update frame) instead of WaitForEndOfFrame —
+    // WaitForEndOfFrame hangs in standalone builds when called on the first frame
+    // before any camera has rendered, which made the cutscene never start.
     private IEnumerator DelayedStart()
     {
-        yield return new WaitForEndOfFrame();
+        yield return null;
         StartCutscene();
     }
 

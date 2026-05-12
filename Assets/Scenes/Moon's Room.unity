@@ -1402,7 +1402,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutsceneManager
   playOnStart: 1
-  playOnEnable: 0
+  playOnEnable: 1
   playOnlyOnce: 1
   cutsceneID: Beginning
   cutsceneActions:
