@@ -1272,7 +1272,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 7.5
+  orthographic size: 6.9166665
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1402,7 +1402,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CutsceneManager
   playOnStart: 1
-  playOnEnable: 1
+  playOnEnable: 0
   playOnlyOnce: 1
   cutsceneID: Beginning
   cutsceneActions:
@@ -1822,14 +1822,14 @@ PrefabInstance:
     - target: {fileID: 3956129847010658271, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 9cba67918f8e0f749a9c5abb563462de, type: 2}
+      objectReference: {fileID: 11400000, guid: c79e0d9e200a9194db0d835e24d005df, type: 2}
     - target: {fileID: 3956129847010658271, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 3177201330143637611, guid: 9cba67918f8e0f749a9c5abb563462de, type: 2}
     - target: {fileID: 3956129847010658271, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_hasFontAssetChanged
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4355141341309628680, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_IsActive
@@ -2637,6 +2637,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 891172015f309584aaa372e683471b57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CanvasCameraBinder
+  planeDistance: 100
 --- !u!1 &859190436
 GameObject:
   m_ObjectHideFlags: 0
@@ -6406,7 +6407,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8601233390473864104, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_SizeDelta.x
-      value: -18.729965
+      value: -33.070007
       objectReference: {fileID: 0}
     - target: {fileID: 8601233390473864104, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_SizeDelta.y
@@ -6414,7 +6415,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8601233390473864104, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.13497925
+      value: 2.5850067
       objectReference: {fileID: 0}
     - target: {fileID: 8601233390473864104, guid: ae167b6cffcd145e6a2b1f7ccc2c3d26, type: 3}
       propertyPath: m_AnchoredPosition.y

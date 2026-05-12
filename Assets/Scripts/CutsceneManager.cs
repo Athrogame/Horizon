@@ -23,8 +23,19 @@ public class CutsceneManager : MonoBehaviour
 
     private Coroutine activeRoutine;
 
+    // Prefixed so old un-prefixed PlayerPrefs values left over from prior dev builds
+    // are orphaned and the release build starts from a clean slate. Dev/editor uses
+    // a separate prefix so a dev playthrough can never write to the release namespace.
+    private string Key =>
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        "dev_cutscene_" + cutsceneID;
+#else
+        "cutscene_" + cutsceneID;
+#endif
+
     private void Start()
     {
+        Debug.Log($"[Cutscene/{cutsceneID}] Start fired. playOnStart={playOnStart} playOnEnable={playOnEnable} active={gameObject.activeInHierarchy} enabled={enabled}");
         // Guard against double-fire if both flags are set.
         if (playOnStart && !playOnEnable)
             StartCoroutine(DelayedStart());
@@ -32,16 +43,28 @@ public class CutsceneManager : MonoBehaviour
 
     private void OnEnable()
     {
+        Debug.Log($"[Cutscene/{cutsceneID}] OnEnable fired. playOnEnable={playOnEnable}");
         if (playOnEnable)
             StartCoroutine(DelayedStart());
     }
 
-    // One-frame delay so all Awake/Start methods finish before the cutscene begins.
-    // Uses `yield return null` (one Update frame) instead of WaitForEndOfFrame —
-    // WaitForEndOfFrame hangs in standalone builds when called on the first frame
-    // before any camera has rendered, which made the cutscene never start.
+    // Wait until PlayerController.I exists before starting. On first scene load in
+    // standalone builds, the player's Awake can fire after this script's Start, so
+    // a single-frame delay isn't enough — the cutscene would silently no-op the
+    // movement lock / idle calls. We cap the wait so a missing player can't hang us.
     private IEnumerator DelayedStart()
     {
+        Debug.Log($"[Cutscene/{cutsceneID}] DelayedStart waiting for PlayerController.I...");
+        const int maxFrames = 60;
+        int waited = 0;
+        for (int i = 0; i < maxFrames; i++)
+        {
+            if (PlayerController.I != null) break;
+            waited++;
+            yield return null;
+        }
+        Debug.Log($"[Cutscene/{cutsceneID}] DelayedStart done waiting. framesWaited={waited} playerFound={(PlayerController.I != null)}");
+        // One extra frame so everything else's Start has fired too.
         yield return null;
         StartCutscene();
     }
@@ -49,14 +72,18 @@ public class CutsceneManager : MonoBehaviour
     // Begins the cutscene. Call this from a trigger collider, UnityEvent, or another script.
     public void StartCutscene()
     {
+        int stored = string.IsNullOrEmpty(cutsceneID) ? -1 : PlayerPrefs.GetInt(Key, 0);
+        Debug.Log($"[Cutscene/{cutsceneID}] StartCutscene called. playOnlyOnce={playOnlyOnce} key='{Key}' stored={stored}");
+
         if (playOnlyOnce)
         {
             if (string.IsNullOrEmpty(cutsceneID))
             {
                 Debug.LogWarning($"[CutsceneManager] '{gameObject.name}' has Play Only Once enabled but no Cutscene ID set — it will always replay.");
             }
-            else if (PlayerPrefs.GetInt(cutsceneID, 0) == 1)
+            else if (stored == 1)
             {
+                Debug.Log($"[Cutscene/{cutsceneID}] SKIPPING — already played (key '{Key}' = 1).");
                 return; // Already played — skip.
             }
         }
@@ -64,6 +91,7 @@ public class CutsceneManager : MonoBehaviour
         if (activeRoutine != null)
             StopCoroutine(activeRoutine);
 
+        Debug.Log($"[Cutscene/{cutsceneID}] Starting PlayCutsceneRoutine. actionCount={cutsceneActions?.Count ?? 0}");
         activeRoutine = StartCoroutine(PlayCutsceneRoutine());
     }
 
@@ -71,7 +99,7 @@ public class CutsceneManager : MonoBehaviour
     public void ResetCutscene()
     {
         if (!string.IsNullOrEmpty(cutsceneID))
-            PlayerPrefs.DeleteKey(cutsceneID);
+            PlayerPrefs.DeleteKey(Key);
     }
 
     private IEnumerator PlayCutsceneRoutine()
@@ -220,7 +248,7 @@ public class CutsceneManager : MonoBehaviour
 
         if (playOnlyOnce && !string.IsNullOrEmpty(cutsceneID))
         {
-            PlayerPrefs.SetInt(cutsceneID, 1);
+            PlayerPrefs.SetInt(Key, 1);
             PlayerPrefs.Save();
         }
     }

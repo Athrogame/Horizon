@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 // Manages window resolution and scaling using strict integer multipliers only (x1, x2, x3, x4).
@@ -53,15 +54,21 @@ public class ResolutionManager : MonoBehaviour
 
     private void Update()
     {
+        var kb = Keyboard.current;
+        if (kb == null) return;
+
         // F11 / F4 toggle fullscreen. Alt+Return is the standard Mac shortcut.
-        bool altHeld = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
-        if (Input.GetKeyDown(KeyCode.F11) || Input.GetKeyDown(KeyCode.F4) || (altHeld && Input.GetKeyDown(KeyCode.Return)))
+        bool altHeld = kb.leftAltKey.isPressed || kb.rightAltKey.isPressed;
+        if (kb.f11Key.wasPressedThisFrame
+            || kb.f4Key.wasPressedThisFrame
+            || (altHeld && kb.enterKey.wasPressedThisFrame))
             ToggleFullscreen();
 
         // Number keys 1–4 set the windowed scale multiplier directly.
-        for (int i = 1; i <= 4; i++)
-            if (Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha0 + i)))
-                SetWindowScale(i);
+        if (kb.digit1Key.wasPressedThisFrame) SetWindowScale(1);
+        else if (kb.digit2Key.wasPressedThisFrame) SetWindowScale(2);
+        else if (kb.digit3Key.wasPressedThisFrame) SetWindowScale(3);
+        else if (kb.digit4Key.wasPressedThisFrame) SetWindowScale(4);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
