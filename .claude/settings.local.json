@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk 'NR>=120 && NR<=220' \"c:/Users/aydin/unity/Horizon/Assets/Art/UI/AydinHand SDF2.asset\")"
+    ]
+  }
+}

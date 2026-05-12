@@ -408,7 +408,7 @@ MonoBehaviour:
   backgroundFadeDuration: 0.2
   noSpeaker: 0
   optionsContainer: {fileID: 2841052945942507786}
-  optionFont: {fileID: 11400000, guid: 9cba67918f8e0f749a9c5abb563462de, type: 2}
+  optionFont: {fileID: 11400000, guid: c79e0d9e200a9194db0d835e24d005df, type: 2}
   optionFontSize: 60
   optionRowSpacing: 8
   optionVerticalPadding: 12

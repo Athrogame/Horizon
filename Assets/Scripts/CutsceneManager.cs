@@ -83,7 +83,8 @@ public class CutsceneManager : MonoBehaviour
             }
             else if (stored == 1)
             {
-                Debug.Log($"[Cutscene/{cutsceneID}] SKIPPING — already played (key '{Key}' = 1).");
+                Debug.Log($"[Cutscene/{cutsceneID}] SKIPPING — already played (key '{Key}' = 1). Re-applying SetActive state.");
+                ApplyPersistentState();
                 return; // Already played — skip.
             }
         }
@@ -100,6 +101,52 @@ public class CutsceneManager : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(cutsceneID))
             PlayerPrefs.DeleteKey(Key);
+    }
+
+    // Re-applies the world-state actions from this cutscene without playing it.
+    // Called when a Play-Only-Once cutscene is being skipped on re-entry, so anything
+    // it had toggled on/off (or teleported) stays that way after a scene reload.
+    private void ApplyPersistentState()
+    {
+        foreach (CutsceneAction action in cutsceneActions)
+        {
+            switch (action.actionType)
+            {
+                case CutsceneActionType.SetActive:
+                    if (action.targetGameObject != null)
+                        action.targetGameObject.SetActive(action.setActiveState);
+                    break;
+
+                case CutsceneActionType.TeleportObject:
+                    if (action.targetToMove != null && action.destinationNode != null)
+                    {
+                        Vector3 dest = new Vector3(action.destinationNode.position.x, action.destinationNode.position.y, action.targetToMove.position.z);
+                        Rigidbody2D rb = action.targetToMove.GetComponent<Rigidbody2D>();
+                        if (rb != null)
+                        {
+                            rb.position = dest;
+                            rb.linearVelocity = Vector2.zero;
+                        }
+                        action.targetToMove.position = dest;
+                    }
+                    break;
+
+                case CutsceneActionType.MoveToTransform:
+                    // The cutscene's net effect on position is that the target ends at the destination.
+                    if (action.targetToMove != null && action.destinationNode != null)
+                    {
+                        Vector3 dest = new Vector3(action.destinationNode.position.x, action.destinationNode.position.y, action.targetToMove.position.z);
+                        Rigidbody2D rb = action.targetToMove.GetComponent<Rigidbody2D>();
+                        if (rb != null)
+                        {
+                            rb.position = dest;
+                            rb.linearVelocity = Vector2.zero;
+                        }
+                        action.targetToMove.position = dest;
+                    }
+                    break;
+            }
+        }
     }
 
     private IEnumerator PlayCutsceneRoutine()
