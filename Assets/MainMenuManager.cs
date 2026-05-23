@@ -23,6 +23,16 @@ public class MainMenuManager : MonoBehaviour
     public string sceneToLoad;
     private bool isFading = false;
 
+    [Header("Animations")]
+    public Vector3 selectedScale = new Vector3(1.25f, 1.25f, 1f);
+    public Vector3 unselectedScale = new Vector3(0.9f, 0.9f, 1f);
+    public Vector3 floatOffset = new Vector3(30f, 0f, 0f);
+    public float siblingShiftAmount = 25f;
+    public float lerpSpeed = 12f;
+
+    private List<Vector3> startPositions = new List<Vector3>();
+    private List<RectTransform> buttonRects = new List<RectTransform>();
+
     void Start()
     {
         moveAction = InputSystem.actions.FindAction("Move");
@@ -39,11 +49,32 @@ public class MainMenuManager : MonoBehaviour
             fadeImage.gameObject.SetActive(true);
             fadeImage.raycastTarget = false;
         }
+
+        startPositions.Clear();
+        buttonRects.Clear();
         for (int i = 0; i < mainMenuButtons.Count; i++)
         {
-            mainMenuButtons[i].color = unselectedColor;
-            if(i ==0 ){
-                mainMenuButtons[i].color = selectedColor;
+            if (mainMenuButtons[i] != null)
+            {
+                RectTransform rt = GetButtonRectTransform(mainMenuButtons[i]);
+                buttonRects.Add(rt);
+                startPositions.Add(rt != null ? rt.anchoredPosition3D : Vector3.zero);
+
+                // Set initial immediate states to prevent popping
+                mainMenuButtons[i].color = (i == 0) ? selectedColor : unselectedColor;
+                if (rt != null)
+                {
+                    rt.localScale = (i == 0) ? selectedScale : unselectedScale;
+                    if (i == 0)
+                    {
+                        rt.anchoredPosition3D = startPositions[0] + floatOffset;
+                    }
+                }
+            }
+            else
+            {
+                buttonRects.Add(null);
+                startPositions.Add(Vector3.zero);
             }
         }
     }
@@ -51,14 +82,9 @@ public class MainMenuManager : MonoBehaviour
     void Update()
     {
         if(isFading) return;
-        foreach(Image image in mainMenuButtons){
-            if(mainMenuButtons.IndexOf(image) == index){
-                image.color = selectedColor;
-            }
-            else{
-                image.color = unselectedColor;
-            }
-        }
+        
+        AnimateButtons();
+
         if(moveAction.WasPressedThisFrame()){
             Vector2 input = moveAction.ReadValue<Vector2>();
             if(input.y < 0){
@@ -84,6 +110,71 @@ public class MainMenuManager : MonoBehaviour
             SettingsBack();
         }
 
+    }
+
+    private void AnimateButtons()
+    {
+        if (index < 0 || index >= mainMenuButtons.Count) return;
+
+        for (int i = 0; i < mainMenuButtons.Count; i++)
+        {
+            Image buttonImage = mainMenuButtons[i];
+            if (buttonImage == null) continue;
+
+            RectTransform rt = buttonRects[i];
+            if (rt == null) continue;
+
+            Vector3 targetPosition;
+            Vector3 targetScale;
+            Color targetColor;
+
+            if (i == index)
+            {
+                // Selected button
+                targetPosition = startPositions[i] + floatOffset;
+                targetScale = selectedScale;
+                targetColor = selectedColor;
+            }
+            else
+            {
+                // Unselected button
+                Vector3 direction = startPositions[i] - startPositions[index];
+                Vector3 pushDir;
+                if (direction.sqrMagnitude > 0.001f)
+                {
+                    pushDir = direction.normalized;
+                }
+                else
+                {
+                    pushDir = (i > index) ? Vector3.down : Vector3.up;
+                }
+
+                targetPosition = startPositions[i] + pushDir * siblingShiftAmount;
+                targetScale = unselectedScale;
+                targetColor = unselectedColor;
+            }
+
+            // Smoothly interpolate position, scale, and color
+            rt.anchoredPosition3D = Vector3.Lerp(rt.anchoredPosition3D, targetPosition, Time.deltaTime * lerpSpeed);
+            rt.localScale = Vector3.Lerp(rt.localScale, targetScale, Time.deltaTime * lerpSpeed);
+            buttonImage.color = Color.Lerp(buttonImage.color, targetColor, Time.deltaTime * lerpSpeed);
+        }
+    }
+
+    private RectTransform GetButtonRectTransform(Image image)
+    {
+        if (image == null) return null;
+
+        // If the image is on a child object (like a border or background) and the parent has a Button,
+        // we want to animate the parent so the text and border move together.
+        Button parentButton = image.GetComponentInParent<Button>();
+        if (parentButton != null)
+        {
+            return parentButton.GetComponent<RectTransform>();
+        }
+
+        // Fallback to the image's own RectTransform
+        return image.rectTransform;
     }
     public void Settings(){
         IsSettingActive = true;

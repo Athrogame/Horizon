@@ -397,16 +397,18 @@ MonoBehaviour:
   speakerRect: {fileID: 392963044372033600}
   portraitObject: {fileID: 377641792247801647}
   emotionEntries: []
-  showDuration: 0.35
-  hideDuration: 0.25
+  showDuration: 0.75
+  hideDuration: 0.65
   hiddenOffset: 800
   focusScale: 1.5
   focusPosOffset: {x: 0, y: 0}
   startFocused: 0
   focusBackground: {fileID: 0}
   backgroundTargetAlpha: 0.6
-  backgroundFadeDuration: 0.2
+  backgroundFadeDuration: 0.35
   noSpeaker: 0
+  questionShowDuration: 0.32
+  questionHideDuration: 0.28
   optionsContainer: {fileID: 2841052945942507786}
   optionFont: {fileID: 11400000, guid: c79e0d9e200a9194db0d835e24d005df, type: 2}
   optionFontSize: 60
@@ -948,8 +950,8 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  slideUpDuration: 0.5
-  slideDownDuration: 0.8
+  slideUpDuration: 0.9
+  slideDownDuration: 0.85
   closeDelay: 1.5
   hiddenOffset: 1200
   dialogueLines: []

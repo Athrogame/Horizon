@@ -6,6 +6,9 @@ using TMPro;
 
 public class SpeakerBox : MonoBehaviour, ISpeakerBox
 {
+    private const float MaxQuestionShowDuration = 0.32f;
+    private const float MaxQuestionHideDuration = 0.28f;
+
     // -------------------------------------------------------------------------
     // Inspector References
     // -------------------------------------------------------------------------
@@ -35,9 +38,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     // -------------------------------------------------------------------------
     [Header("Animation")]
     [Tooltip("Duration of the slide-in animation.")]
-    public float showDuration = 0.35f;
+    public float showDuration = 0.75f;
     [Tooltip("Duration of the slide-out animation.")]
-    public float hideDuration = 0.25f;
+    public float hideDuration = 0.65f;
     [Tooltip("How far below the screen the speaker starts/ends its slide animation.")]
     public float hiddenOffset = 800f;
 
@@ -59,7 +62,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     [Header("Focus Background")]
     public Image focusBackground;
     public float backgroundTargetAlpha = 0.6f;
-    public float backgroundFadeDuration = 0.2f;
+    public float backgroundFadeDuration = 0.35f;
 
     // -------------------------------------------------------------------------
     // No-speaker / question mode
@@ -67,6 +70,12 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     [Header("Question Mode")]
     [Tooltip("If true, no portrait is ever shown — the box is identity-less. Options still appear here during questions.")]
     public bool noSpeaker = false;
+
+    [Tooltip("Duration for a no-speaker choice box sliding in during questions.")]
+    public float questionShowDuration = MaxQuestionShowDuration;
+
+    [Tooltip("Duration for a no-speaker choice box sliding out after questions.")]
+    public float questionHideDuration = MaxQuestionHideDuration;
 
     [Tooltip("Container inside the speaker box where question options are generated. Should cover the same area as the portrait. Assign in Inspector.")]
     public RectTransform optionsContainer;
@@ -327,7 +336,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             Vector2 restingPos = speakerRect.anchoredPosition;
             Vector2 hiddenPos = restingPos + new Vector2(0f, -hiddenOffset);
             speakerRect.anchoredPosition = hiddenPos;
-            StartMove(hiddenPos, restingPos, showDuration);
+            StartMove(hiddenPos, restingPos, GetQuestionShowDuration());
         }
 
         // Labels anchor to the bottom of the container and stack upward
@@ -386,7 +395,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             if (speakerRect != null)
             {
                 Vector2 startPos = speakerRect.anchoredPosition;
-                StartMove(startPos, startPos + new Vector2(0f, -hiddenOffset), hideDuration, () =>
+                StartMove(startPos, startPos + new Vector2(0f, -hiddenOffset), GetQuestionHideDuration(), () =>
                 {
                     speakerRect.sizeDelta = _originalSizeDelta;
                     speakerRect.anchoredPosition = originalPos;
@@ -439,7 +448,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         while (t < duration)
         {
             t += Time.deltaTime;
-            float lerp = 1f - Mathf.Pow(1f - Mathf.Clamp01(t / duration), 3f);
+            float lerp = SmoothControlledEase(t / duration);
             if (speakerRect != null)
                 speakerRect.anchoredPosition = Vector2.Lerp(from, to, lerp);
             yield return null;
@@ -465,7 +474,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         while (t < duration)
         {
             t += Time.deltaTime;
-            float lerp = 1f - Mathf.Pow(1f - Mathf.Clamp01(t / duration), 3f);
+            float lerp = SmoothControlledEase(t / duration);
             transform.localScale = Vector3.Lerp(from, to, lerp);
             yield return null;
         }
@@ -511,5 +520,21 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
 
         if (disableOnComplete && Mathf.Approximately(to, 0f))
             focusBackground.gameObject.SetActive(false);
+    }
+
+    private static float SmoothControlledEase(float t)
+    {
+        t = Mathf.Clamp01(t);
+        return t * t * (3f - 2f * t);
+    }
+
+    private float GetQuestionShowDuration()
+    {
+        return Mathf.Max(0.01f, Mathf.Min(questionShowDuration, MaxQuestionShowDuration));
+    }
+
+    private float GetQuestionHideDuration()
+    {
+        return Mathf.Max(0.01f, Mathf.Min(questionHideDuration, MaxQuestionHideDuration));
     }
 }

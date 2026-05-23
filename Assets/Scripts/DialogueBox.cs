@@ -44,6 +44,8 @@ public class DialogueLine
 
 public class DialogueBox : MonoBehaviour
 {
+    private const float MaxSlideUpOffset = 900f;
+
     [Header("Text Components")]
     public TextMeshProUGUI dialogueText;
     public GameObject continueIndicator;
@@ -67,8 +69,8 @@ public class DialogueBox : MonoBehaviour
     public UnityEngine.Events.UnityEvent onDialogueClosed;
 
     [Header("Panel Animation")]
-    public float slideUpDuration = 0.5f;
-    public float slideDownDuration = 0.5f;
+    public float slideUpDuration = 0.9f;
+    public float slideDownDuration = 0.85f;
     public float closeDelay = 0.15f;
     public float hiddenOffset = 5000f;
 
@@ -401,8 +403,8 @@ public class DialogueBox : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
 
-        // Snap to hidden position and slide up to its true anchored position
-        rectTransform.anchoredPosition = hiddenPosition;
+        // Snap near the screen edge and slide up to its true anchored position.
+        rectTransform.anchoredPosition = GetSlideUpStartPosition();
 
         slideAnimationCoroutine = StartCoroutine(SlideUp());
     }
@@ -578,14 +580,14 @@ public class DialogueBox : MonoBehaviour
         if (rectTransform == null) yield break;
 
         float elapsed = 0f;
-        Vector2 startPos = hiddenPosition;
+        Vector2 startPos = GetSlideUpStartPosition();
         Vector2 endPos = visiblePosition;
+        float duration = Mathf.Max(0.01f, slideUpDuration);
 
-        while (elapsed < slideUpDuration)
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / slideUpDuration;
-            t = 1f - Mathf.Pow(1f - t, 3f); // ease-out
+            float t = SmoothControlledEase(elapsed / duration);
 
             rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
             yield return null;
@@ -669,8 +671,7 @@ public class DialogueBox : MonoBehaviour
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            t = 1f - Mathf.Pow(1f - t, 3f);
+            float t = SmoothControlledEase(elapsed / duration);
 
             rectTransform.anchoredPosition = Vector2.Lerp(startPos, endPos, t);
             yield return null;
@@ -684,5 +685,17 @@ public class DialogueBox : MonoBehaviour
             continueIndicator.SetActive(false);
 
         gameObject.SetActive(false);
+    }
+
+    private static float SmoothControlledEase(float t)
+    {
+        t = Mathf.Clamp01(t);
+        return t * t * (3f - 2f * t);
+    }
+
+    private Vector2 GetSlideUpStartPosition()
+    {
+        float slideUpOffset = Mathf.Min(hiddenOffset, MaxSlideUpOffset);
+        return new Vector2(visiblePosition.x, visiblePosition.y - slideUpOffset);
     }
 }

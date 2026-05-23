@@ -590,6 +590,11 @@ MonoBehaviour:
   fadeImage: {fileID: 1444419101}
   fadeDuration: 1
   sceneToLoad: 
+  selectedScale: {x: 1.25, y: 1.25, z: 1}
+  unselectedScale: {x: 0.9, y: 0.9, z: 1}
+  floatOffset: {x: 30, y: 0, z: 0}
+  siblingShiftAmount: 25
+  lerpSpeed: 12
 --- !u!4 &519356938
 Transform:
   m_ObjectHideFlags: 0
@@ -1042,7 +1047,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -5.2878265, w: 0}
+  m_margin: {x: 0, y: 0, z: -5.2878113, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
