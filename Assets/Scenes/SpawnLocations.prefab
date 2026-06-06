@@ -91,6 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 413b1dfcc39564662b2fc186d7f16723, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  advanceAction: {fileID: 1781555164194001046, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   sceneToLoad: 1
   doorToLoad: 0
 --- !u!1 &5532239702228269010
@@ -172,3 +173,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   SpawnLocations:
   - {fileID: 6610373304545627694}
+  SpawnDirections: []
