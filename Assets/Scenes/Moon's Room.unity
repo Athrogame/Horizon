@@ -1361,7 +1361,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 7.71875
+  orthographic size: 6.9166665
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -2604,7 +2604,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -1.38, y: 0.36, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 729180470}
@@ -4864,6 +4864,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b6eff289b10e4f97a5d005929d76dde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  selectedColor: {r: 0.9528302, g: 0.79113877, b: 0.04045032, a: 0}
+  unselectedColor: {r: 1, g: 1, b: 1, a: 0}
+  battleMenuButtons:
+  - {fileID: 1590759519}
+  - {fileID: 1306347797}
+  - {fileID: 632463992}
   BattleCanvas: {fileID: 1923585747}
 --- !u!4 &1680050527
 Transform:
@@ -6253,7 +6259,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1923585748
 MonoBehaviour:
   m_ObjectHideFlags: 0
