@@ -12,9 +12,12 @@ public class BattleManager : MonoBehaviour
     private InputAction moveAction;
     private InputAction Interact;
     private InputAction cancel;
-    private int index;
+    [SerializeField] private int index;
     private bool hasMovementLock;
     public List<Image> battleMenuButtons = new List<Image>();
+    private bool subMenu;
+    public GameObject submenuoptions;
+    public GameObject battleChooser;
 
    
     public static BattleManager I{ get; private set; }
@@ -74,6 +77,13 @@ public class BattleManager : MonoBehaviour
         }
 
         AnimateButtons();
+
+        if(Interact.WasPressedThisFrame()&&index == 0){
+            Attack();
+        }
+        if(cancel.WasPressedThisFrame()&&subMenu){
+            AttackBack();
+        }
     }
 
     private bool TryGetBattleMove(out Vector2 moveDirection)
@@ -223,5 +233,16 @@ public class BattleManager : MonoBehaviour
 
             buttonImage.color = targetColor;
         }
+    }
+    public void Attack(){
+        subMenu=true;
+        submenuoptions.SetActive(true);
+        battleChooser.SetActive(false);
+    }
+    public void AttackBack(){
+        subMenu=false;
+        submenuoptions.SetActive(false);
+        battleChooser.SetActive(true);
+
     }
 }
