@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 34335069dd84a42a6b777f410e900fac
+guid: 46d7bc697b54f4439a98e5d02a4b3a57
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8330916237126374765
-    second: battlemenuoption_0
+      213: 1799502939442018134
+    second: newselection_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,8 +52,8 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 2, y: 0, z: 2, w: 2}
-  spriteGenerateFallbackPhysicsShape: 1
+  spriteBorder: {x: 17, y: 17, z: 16, w: 16}
+  spriteGenerateFallbackPhysicsShape: 0
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: battlemenuoption_0
+      name: newselection_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 110
-        height: 40
+        width: 17
+        height: 17
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 39a6c8842d3a26c80800000000000000
-      internalID: -8330916237126374765
+      spriteID: 65776b5a36e19f810800000000000000
+      internalID: 1799502939442018134
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      battlemenuoption_0: -8330916237126374765
+      newselection_0: 1799502939442018134
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

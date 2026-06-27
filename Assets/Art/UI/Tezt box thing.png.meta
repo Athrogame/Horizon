@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 34335069dd84a42a6b777f410e900fac
+guid: 9db80e84ac6334dc3b4ab92dd041422f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8330916237126374765
-    second: battlemenuoption_0
+      213: 1971636984247118146
+    second: Tezt box thing_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -52,7 +52,7 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 2, y: 0, z: 2, w: 2}
+  spriteBorder: {x: 17, y: 17, z: 16, w: 16}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: battlemenuoption_0
+      name: Tezt box thing_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 110
-        height: 40
+        width: 34
+        height: 34
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 39a6c8842d3a26c80800000000000000
-      internalID: -8330916237126374765
+      spriteID: 24962181469ac5b10800000000000000
+      internalID: 1971636984247118146
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      battlemenuoption_0: -8330916237126374765
+      Tezt box thing_0: 1971636984247118146
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
