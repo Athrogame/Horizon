@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: vingette
-  m_Shader: {fileID: 4800000, guid: 591ef5c2e7eca9740821764401fd1db8, type: 3}
+  m_Name: light
+  m_Shader: {fileID: 4800000, guid: 3b9cc43b4894247ed9576c4af8d877b0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,13 +41,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AmbientGlow: 0.137
+    - _AspectRatio: 3.33
+    - _BreathSpeed: 2.14
+    - _DustOpacity: 0.2
+    - _DustSize: 0.0043
     - _EnableExternalAlpha: 0
-    - _VignetteRadius: 0.249
-    - _VignetteSoftness: 0.636
-    - _VignetteStrength: 1
+    - _RayBrightness: 0.18
+    - _WindowY: 0.5
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _RayColor: {r: 1, g: 0.87, b: 0.30999997, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

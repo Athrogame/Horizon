@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Morning Sun Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: sans-serif; }
+  h2 { color: #ccc; margin-bottom: 12px; font-size: 15px; letter-spacing: 1px; }
+  p.note { color: #888; font-size: 12px; margin-bottom: 20px; }
+
+  .scene-wrap {
+    position: relative;
+    width: 560px;
+    height: 300px;
+    border: 2px solid #333;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  /* ── ROOM BACKGROUND ── */
+  .room {
+    position: absolute; inset: 0;
+    background: #3a2060; /* purple wall */
+    image-rendering: pixelated;
+  }
+
+  /* floor */
+  .floor {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 38%;
+    background: #4a3820;
+    border-top: 3px solid #5a4a28;
+  }
+
+  /* baseboard */
+  .baseboard {
+    position: absolute;
+    bottom: 38%; left: 0; right: 0;
+    height: 5px;
+    background: #6a5a30;
+  }
+
+  /* rug */
+  .rug {
+    position: absolute;
+    bottom: 8%; left: 28%; right: 15%;
+    height: 52px;
+    border-radius: 50%;
+    background: #1a0a40;
+    border: 3px solid #d4a820;
+  }
+
+  /* desk left */
+  .desk {
+    position: absolute;
+    bottom: 38%; left: 2%;
+    width: 80px; height: 55px;
+    background: #5a3a18;
+    border-top: 3px solid #7a5a28;
+  }
+  .desk-leg { position:absolute; bottom:-18px; width:8px; height:18px; background:#4a2e10; }
+  .desk-leg.left  { left: 5px; }
+  .desk-leg.right { right: 5px; }
+  .monitor {
+    position:absolute; top:-30px; left:8px;
+    width:28px; height:22px;
+    background:#111; border:2px solid #444;
+    border-radius:2px;
+  }
+  .monitor::after {
+    content:''; position:absolute;
+    bottom:-7px; left:8px;
+    width:12px; height:5px;
+    background:#333; border-radius:1px;
+  }
+
+  /* bookshelves right */
+  .shelf-unit {
+    position: absolute;
+    bottom: 38%; right: 22%;
+    width: 55px; height: 90px;
+    background: #4a3018;
+    border: 2px solid #6a4a28;
+  }
+  .shelf-unit2 {
+    position: absolute;
+    bottom: 38%; right: 12%;
+    width: 55px; height: 90px;
+    background: #4a3018;
+    border: 2px solid #6a4a28;
+  }
+  .shelf-line {
+    position:absolute; left:2px; right:2px;
+    height:2px; background:#6a4a28;
+  }
+  /* books */
+  .books { position:absolute; top:4px; left:3px; display:flex; gap:2px; align-items:flex-end; }
+  .book  { width:6px; border-radius:1px 0 0 0; }
+
+  /* door right */
+  .door {
+    position: absolute;
+    bottom: 38%; right: 2%;
+    width: 45px; height: 85px;
+    background: #3a1e08;
+    border: 2px solid #5a3010;
+    border-radius: 3px 3px 0 0;
+  }
+  .door-knob {
+    position: absolute; right: 6px; top: 45%;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #c0a030;
+  }
+
+  /* picture on wall */
+  .picture {
+    position: absolute;
+    top: 12%; left: 2%;
+    width: 40px; height: 38px;
+    background: #e8e0d0;
+    border: 3px solid #6a4a28;
+    border-radius: 1px;
+  }
+  .picture-inner {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #e8d080 0%, #f0a830 100%);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 16px;
+  }
+
+  /* ── LIGHT SHAFT EFFECT ── */
+  .light-shaft-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* main wide beam */
+  .shaft-main {
+    position: absolute;
+    left: -60px; top: 0;
+    width: 260px; height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255,200,60,0.0) 0%,
+      rgba(255,195,55,0.28) 30%,
+      rgba(255,210,70,0.42) 50%,
+      rgba(255,195,55,0.28) 68%,
+      rgba(255,180,40,0.08) 85%,
+      rgba(255,180,40,0.0) 100%
+    );
+    transform: skewX(-12deg);
+    filter: blur(10px);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  /* inner bright core */
+  .shaft-core {
+    position: absolute;
+    left: -20px; top: 0;
+    width: 110px; height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(255,230,120,0.0) 0%,
+      rgba(255,230,120,0.20) 40%,
+      rgba(255,240,140,0.35) 55%,
+      rgba(255,230,120,0.18) 70%,
+      rgba(255,230,120,0.0) 100%
+    );
+    transform: skewX(-12deg);
+    filter: blur(4px);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  /* source edge glow (simulates window edge) */
+  .shaft-edge {
+    position: absolute;
+    left: 0; top: 0;
+    width: 10px; height: 100%;
+    background: linear-gradient(to right, rgba(255,245,180,0.75), transparent);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  /* floor pool */
+  .floor-pool {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 240px; height: 60px;
+    background: radial-gradient(ellipse at 20% 100%, rgba(255,190,40,0.32) 0%, transparent 65%);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  /* wall tint (the wall gets slightly lit) */
+  .wall-tint {
+    position: absolute;
+    left: 0; top: 0;
+    width: 180px; height: 62%;
+    background: radial-gradient(ellipse at 0% 0%, rgba(255,180,40,0.14) 0%, transparent 70%);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.72; }
+  }
+
+  /* ── DUST MOTES ── */
+  .dust {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,240,160,0.85);
+    box-shadow: 0 0 4px rgba(255,220,80,0.6);
+    animation: drift linear infinite;
+  }
+
+  @keyframes drift {
+    0%   { transform: translate(0px, 0px); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.7; }
+    100% { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <h2>Morning Sun Shaft — Left Side Preview</h2>
+  <p class="note">Animated — watch the shaft breathe and dust motes drift upward</p>
+
+  <div class="scene-wrap">
+
+    <!-- ROOM -->
+    <div class="room"></div>
+    <div class="floor"></div>
+    <div class="baseboard"></div>
+    <div class="rug"></div>
+
+    <!-- desk -->
+    <div class="desk">
+      <div class="desk-leg left"></div>
+      <div class="desk-leg right"></div>
+      <div class="monitor"></div>
+    </div>
+
+    <!-- bookshelves -->
+    <div class="shelf-unit">
+      <div class="shelf-line" style="top:30%"></div>
+      <div class="shelf-line" style="top:60%"></div>
+      <div class="books" style="top:4px">
+        <div class="book" style="height:22px;background:#c03030;"></div>
+        <div class="book" style="height:18px;background:#3060c0;"></div>
+        <div class="book" style="height:24px;background:#30a040;"></div>
+        <div class="book" style="height:16px;background:#c09020;"></div>
+        <div class="book" style="height:20px;background:#8030c0;"></div>
+      </div>
+      <div class="books" style="top:36%">
+        <div class="book" style="height:18px;background:#c06030;"></div>
+        <div class="book" style="height:20px;background:#208080;"></div>
+        <div class="book" style="height:16px;background:#a03060;"></div>
+        <div class="book" style="height:22px;background:#4070a0;"></div>
+      </div>
+    </div>
+    <div class="shelf-unit2">
+      <div class="shelf-line" style="top:30%"></div>
+      <div class="shelf-line" style="top:60%"></div>
+      <div class="books" style="top:4px">
+        <div class="book" style="height:20px;background:#d04040;"></div>
+        <div class="book" style="height:24px;background:#4040c0;"></div>
+        <div class="book" style="height:18px;background:#208050;"></div>
+        <div class="book" style="height:22px;background:#b08010;"></div>
+      </div>
+    </div>
+
+    <!-- door -->
+    <div class="door"><div class="door-knob"></div></div>
+
+    <!-- picture -->
+    <div class="picture"><div class="picture-inner">🦊</div></div>
+
+    <!-- LIGHT SHAFT -->
+    <div class="light-shaft-container">
+      <div class="wall-tint"></div>
+      <div class="shaft-main"></div>
+      <div class="shaft-core"></div>
+      <div class="shaft-edge"></div>
+      <div class="floor-pool"></div>
+
+      <!-- dust motes — each has unique position, size, speed, drift direction -->
+      <div class="dust" style="width:3px;height:3px;left:28px;top:40px;--dx:-6px;--dy:-80px;animation-duration:6s;animation-delay:0s;"></div>
+      <div class="dust" style="width:2px;height:2px;left:52px;top:90px;--dx:-4px;--dy:-70px;animation-duration:8s;animation-delay:1.2s;"></div>
+      <div class="dust" style="width:3px;height:3px;left:18px;top:130px;--dx:5px;--dy:-90px;animation-duration:7s;animation-delay:0.5s;"></div>
+      <div class="dust" style="width:2px;height:2px;left:72px;top:60px;--dx:-8px;--dy:-65px;animation-duration:9s;animation-delay:2.1s;"></div>
+      <div class="dust" style="width:2px;height:2px;left:38px;top:160px;--dx:4px;--dy:-100px;animation-duration:7.5s;animation-delay:3s;"></div>
+      <div class="dust" style="width:3px;height:3px;left:60px;top:110px;--dx:-5px;--dy:-75px;animation-duration:6.5s;animation-delay:1.8s;"></div>
+      <div class="dust" style="width:2px;height:2px;left:22px;top:200px;--dx:6px;--dy:-85px;animation-duration:8.5s;animation-delay:0.8s;"></div>
+      <div class="dust" style="width:2px;height:2px;left:45px;top:240px;--dx:-3px;--dy:-95px;animation-duration:7s;animation-delay:4s;"></div>
+      <div class="dust" style="width:3px;height:3px;left:80px;top:180px;--dx:-7px;--dy:-70px;animation-duration:9.5s;animation-delay:2.5s;"></div>
+      <div class="dust" style="width:2px;height:2px;left:15px;top:70px;--dx:3px;--dy:-80px;animation-duration:8s;animation-delay:5s;"></div>
+    </div>
+
+  </div>
+
+  <p style="color:#666;font-size:11px;margin-top:14px;">In-game this would be a Quad with an additive URP shader — blends over your actual pixel art scene</p>
+</body>
+</html>
