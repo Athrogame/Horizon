@@ -33,6 +33,9 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     [Tooltip("Drag Sprites here. Index matches the dialogue line index.")]
     public List<EmotionEntry> emotionEntries = new List<EmotionEntry>();
 
+    [Tooltip("Keeps portrait sprites at their true aspect ratio inside the portrait rect instead of stretching them to fill it. Forces the Image to Simple type, since Unity ignores Preserve Aspect on Sliced/Tiled images.")]
+    public bool preservePortraitAspect = true;
+
     // -------------------------------------------------------------------------
     // Slide animation
     // -------------------------------------------------------------------------
@@ -289,9 +292,52 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             return;
         }
 
+        if (preservePortraitAspect)
+        {
+            // Preserve Aspect only has an effect on Simple/Filled images.
+            portraitImageComponent.type = Image.Type.Simple;
+            portraitImageComponent.preserveAspect = true;
+        }
+
         portraitImageComponent.sprite  = entry.sprite;
         portraitImageComponent.enabled = true;
     }
+
+#if UNITY_EDITOR
+    // Keeps the Scene/Prefab view showing exactly what line 0 will look like in play mode,
+    // so the portrait can be sized against its real sprite instead of a placeholder.
+    private void OnValidate()
+    {
+        UnityEditor.EditorApplication.delayCall += ApplyEditorPreview;
+    }
+
+    private void ApplyEditorPreview()
+    {
+        if (this == null || Application.isPlaying) return;
+        if (noSpeaker || portraitObject == null) return;
+
+        var img = portraitObject.GetComponent<Image>();
+        if (img == null) return;
+
+        if (preservePortraitAspect)
+        {
+            img.type = Image.Type.Simple;
+            img.preserveAspect = true;
+        }
+
+        var preview = (emotionEntries != null && emotionEntries.Count > 0 && emotionEntries[0] != null)
+            ? emotionEntries[0].sprite
+            : null;
+
+        if (preview != null)
+        {
+            img.sprite = preview;
+            img.enabled = true;
+        }
+
+        UnityEditor.EditorUtility.SetDirty(img);
+    }
+#endif
 
     // -------------------------------------------------------------------------
     // Question mode

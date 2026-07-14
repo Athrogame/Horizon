@@ -124,6 +124,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -153,8 +166,8 @@ TextureImporter:
       name: TILE SHEET_1
       rect:
         serializedVersion: 2
-        x: 0
-        y: 768
+        x: 64
+        y: 800
         width: 32
         height: 32
       alignment: 0
@@ -175,8 +188,8 @@ TextureImporter:
       name: TILE SHEET_2
       rect:
         serializedVersion: 2
-        x: 320
-        y: 384
+        x: 0
+        y: 768
         width: 32
         height: 32
       alignment: 0
@@ -197,7 +210,7 @@ TextureImporter:
       name: TILE SHEET_3
       rect:
         serializedVersion: 2
-        x: 352
+        x: 320
         y: 384
         width: 32
         height: 32
@@ -219,7 +232,7 @@ TextureImporter:
       name: TILE SHEET_4
       rect:
         serializedVersion: 2
-        x: 384
+        x: 352
         y: 384
         width: 32
         height: 32
@@ -241,7 +254,7 @@ TextureImporter:
       name: TILE SHEET_5
       rect:
         serializedVersion: 2
-        x: 416
+        x: 384
         y: 384
         width: 32
         height: 32
@@ -263,7 +276,7 @@ TextureImporter:
       name: TILE SHEET_6
       rect:
         serializedVersion: 2
-        x: 448
+        x: 416
         y: 384
         width: 32
         height: 32
@@ -285,8 +298,8 @@ TextureImporter:
       name: TILE SHEET_7
       rect:
         serializedVersion: 2
-        x: 480
-        y: 384
+        x: 320
+        y: 352
         width: 32
         height: 32
       alignment: 0
@@ -307,8 +320,8 @@ TextureImporter:
       name: TILE SHEET_8
       rect:
         serializedVersion: 2
-        x: 512
-        y: 384
+        x: 352
+        y: 352
         width: 32
         height: 32
       alignment: 0
@@ -329,7 +342,7 @@ TextureImporter:
       name: TILE SHEET_9
       rect:
         serializedVersion: 2
-        x: 320
+        x: 384
         y: 352
         width: 32
         height: 32
@@ -351,7 +364,7 @@ TextureImporter:
       name: TILE SHEET_10
       rect:
         serializedVersion: 2
-        x: 352
+        x: 416
         y: 352
         width: 32
         height: 32
@@ -373,7 +386,7 @@ TextureImporter:
       name: TILE SHEET_11
       rect:
         serializedVersion: 2
-        x: 384
+        x: 480
         y: 352
         width: 32
         height: 32
@@ -395,7 +408,7 @@ TextureImporter:
       name: TILE SHEET_12
       rect:
         serializedVersion: 2
-        x: 416
+        x: 512
         y: 352
         width: 32
         height: 32
@@ -417,8 +430,8 @@ TextureImporter:
       name: TILE SHEET_13
       rect:
         serializedVersion: 2
-        x: 448
-        y: 352
+        x: 320
+        y: 320
         width: 32
         height: 32
       alignment: 0
@@ -439,8 +452,8 @@ TextureImporter:
       name: TILE SHEET_14
       rect:
         serializedVersion: 2
-        x: 480
-        y: 352
+        x: 352
+        y: 320
         width: 32
         height: 32
       alignment: 0
@@ -461,8 +474,8 @@ TextureImporter:
       name: TILE SHEET_15
       rect:
         serializedVersion: 2
-        x: 512
-        y: 352
+        x: 384
+        y: 320
         width: 32
         height: 32
       alignment: 0
@@ -483,7 +496,7 @@ TextureImporter:
       name: TILE SHEET_16
       rect:
         serializedVersion: 2
-        x: 320
+        x: 416
         y: 320
         width: 32
         height: 32
@@ -505,7 +518,7 @@ TextureImporter:
       name: TILE SHEET_17
       rect:
         serializedVersion: 2
-        x: 352
+        x: 480
         y: 320
         width: 32
         height: 32
@@ -527,7 +540,7 @@ TextureImporter:
       name: TILE SHEET_18
       rect:
         serializedVersion: 2
-        x: 384
+        x: 512
         y: 320
         width: 32
         height: 32
@@ -549,8 +562,8 @@ TextureImporter:
       name: TILE SHEET_19
       rect:
         serializedVersion: 2
-        x: 416
-        y: 320
+        x: 448
+        y: 96
         width: 32
         height: 32
       alignment: 0
@@ -571,8 +584,8 @@ TextureImporter:
       name: TILE SHEET_20
       rect:
         serializedVersion: 2
-        x: 448
-        y: 320
+        x: 384
+        y: 64
         width: 32
         height: 32
       alignment: 0
@@ -593,8 +606,8 @@ TextureImporter:
       name: TILE SHEET_21
       rect:
         serializedVersion: 2
-        x: 480
-        y: 320
+        x: 448
+        y: 64
         width: 32
         height: 32
       alignment: 0
@@ -615,8 +628,8 @@ TextureImporter:
       name: TILE SHEET_22
       rect:
         serializedVersion: 2
-        x: 512
-        y: 320
+        x: 384
+        y: 32
         width: 32
         height: 32
       alignment: 0
@@ -638,7 +651,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 448
-        y: 96
+        y: 32
         width: 32
         height: 32
       alignment: 0
@@ -659,8 +672,8 @@ TextureImporter:
       name: TILE SHEET_24
       rect:
         serializedVersion: 2
-        x: 384
-        y: 64
+        x: 0
+        y: 0
         width: 32
         height: 32
       alignment: 0
@@ -681,8 +694,8 @@ TextureImporter:
       name: TILE SHEET_25
       rect:
         serializedVersion: 2
-        x: 448
-        y: 64
+        x: 384
+        y: 0
         width: 32
         height: 32
       alignment: 0
@@ -695,116 +708,6 @@ TextureImporter:
       bones: []
       spriteID: d619b693585534d3ea9f80b8fa5670a6
       internalID: 884083877
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TILE SHEET_26
-      rect:
-        serializedVersion: 2
-        x: 384
-        y: 32
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c46705741582b40e6bb0388285f42e12
-      internalID: 1065039179
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TILE SHEET_27
-      rect:
-        serializedVersion: 2
-        x: 448
-        y: 32
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d353000b5ed594db99bc33ec67261e7c
-      internalID: 1928959271
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TILE SHEET_28
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 736c6c50a816c489ca142d2b72362308
-      internalID: 1850274762
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TILE SHEET_29
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 603d90e65429e41a586b4f9ab06a99ba
-      internalID: -1547020023
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: TILE SHEET_30
-      rect:
-        serializedVersion: 2
-        x: 384
-        y: 0
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 99415c5de204d4096b4d08c2f57a528c
-      internalID: -489705638
       vertices: []
       indices: 
       edges: []
@@ -844,12 +747,7 @@ TextureImporter:
       TILE SHEET_23: 937289680
       TILE SHEET_24: 1105892367
       TILE SHEET_25: 884083877
-      TILE SHEET_26: 1065039179
-      TILE SHEET_27: 1928959271
-      TILE SHEET_28: 1850274762
-      TILE SHEET_29: -1547020023
       TILE SHEET_3: -1878314670703521060
-      TILE SHEET_30: -489705638
       TILE SHEET_4: -8274278088879243755
       TILE SHEET_5: 4556457965254520494
       TILE SHEET_6: -829604864
