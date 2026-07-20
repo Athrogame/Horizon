@@ -10,6 +10,10 @@ public class SceneMgr : MonoBehaviour
 
     public static SceneMgr I { get; private set; }
 
+    // Set by SaveManager right before loading a save, so the loaded position wins over the
+    // door spawn point. Auto-resets after the next scene load consumes it.
+    public static bool SuppressAutoSpawn;
+
     [Header("Transition Animation")]
     [Tooltip("Animator on the transition panel (e.g. full-screen fade). Assign the Panel that uses the Panel controller with 'end' trigger and 'New Animation' state.")]
     public Animator transitionAnim;
@@ -102,6 +106,13 @@ public class SceneMgr : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         StartCoroutine(RebindScreenSpaceCanvases());
+
+        // A save is being loaded — let SaveManager position the player instead of the door spawn.
+        if (SuppressAutoSpawn)
+        {
+            SuppressAutoSpawn = false;
+            return;
+        }
 
         var spawnPoints = Object.FindAnyObjectByType<DoorSpawnPoints>();
         if (spawnPoints == null || PlayerController.I == null || spawnPoints.SpawnLocations.Count == 0)

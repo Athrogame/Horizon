@@ -69,11 +69,23 @@ public class CutsceneManager : MonoBehaviour
         StartCutscene();
     }
 
+    // Flag key stored in the save file when this cutscene has played (per-save, survives loads).
+    private string CutsceneFlag => "cutscene_" + cutsceneID;
+
+    // True if this play-only-once cutscene has already been seen in the current playthrough.
+    // Prefers the save system (per-save, survives loading an old save); falls back to PlayerPrefs
+    // only when no SaveManager exists.
+    private bool HasPlayedCutscene()
+    {
+        if (string.IsNullOrEmpty(cutsceneID)) return false;
+        if (SaveManager.I != null) return SaveManager.I.HasFlag(CutsceneFlag);
+        return PlayerPrefs.GetInt(Key, 0) == 1;
+    }
+
     // Begins the cutscene. Call this from a trigger collider, UnityEvent, or another script.
     public void StartCutscene()
     {
-        int stored = string.IsNullOrEmpty(cutsceneID) ? -1 : PlayerPrefs.GetInt(Key, 0);
-        Debug.Log($"[Cutscene/{cutsceneID}] StartCutscene called. playOnlyOnce={playOnlyOnce} key='{Key}' stored={stored}");
+        Debug.Log($"[Cutscene/{cutsceneID}] StartCutscene called. playOnlyOnce={playOnlyOnce} played={HasPlayedCutscene()}");
 
         if (playOnlyOnce)
         {
@@ -81,9 +93,9 @@ public class CutsceneManager : MonoBehaviour
             {
                 Debug.LogWarning($"[CutsceneManager] '{gameObject.name}' has Play Only Once enabled but no Cutscene ID set — it will always replay.");
             }
-            else if (stored == 1)
+            else if (HasPlayedCutscene())
             {
-                Debug.Log($"[Cutscene/{cutsceneID}] SKIPPING — already played (key '{Key}' = 1). Re-applying SetActive state.");
+                Debug.Log($"[Cutscene/{cutsceneID}] SKIPPING — already played. Re-applying SetActive state.");
                 ApplyPersistentState();
                 return; // Already played — skip.
             }
@@ -100,7 +112,10 @@ public class CutsceneManager : MonoBehaviour
     public void ResetCutscene()
     {
         if (!string.IsNullOrEmpty(cutsceneID))
+        {
+            if (SaveManager.I != null) SaveManager.I.ClearFlag(CutsceneFlag);
             PlayerPrefs.DeleteKey(Key);
+        }
     }
 
     // Re-applies the world-state actions from this cutscene without playing it.
@@ -295,6 +310,9 @@ public class CutsceneManager : MonoBehaviour
 
         if (playOnlyOnce && !string.IsNullOrEmpty(cutsceneID))
         {
+            // Record in the save system (per-save, survives loads) and PlayerPrefs (legacy fallback).
+            if (SaveManager.I != null)
+                SaveManager.I.SetFlag(CutsceneFlag);
             PlayerPrefs.SetInt(Key, 1);
             PlayerPrefs.Save();
         }
