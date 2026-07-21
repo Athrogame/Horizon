@@ -107,6 +107,14 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
     [Tooltip("Extra vertical offset for the selection arrow on top of the row's geometric center. Positive raises the arrow; negative lowers it. Adjust until the arrow lines up with the highlighted option's text.")]
     public float arrowYOffset = 0f;
 
+    [Header("Question Tween")]
+    [Tooltip("Play a springy scale pop when the question box appears (on top of the slide).")]
+    public bool questionScalePop = true;
+    [Tooltip("Scale the box pops up from (1 = no pop). Lower = bigger pop.")]
+    public float questionPopStartScale = 0.85f;
+    [Tooltip("How long the scale pop takes.")]
+    public float questionPopDuration = 0.3f;
+
     // -------------------------------------------------------------------------
     // Private state
     // -------------------------------------------------------------------------
@@ -383,6 +391,7 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
             Vector2 hiddenPos = restingPos + new Vector2(0f, -hiddenOffset);
             speakerRect.anchoredPosition = hiddenPos;
             StartMove(hiddenPos, restingPos, GetQuestionShowDuration());
+            PlayQuestionPop();
         }
 
         // Labels anchor to the bottom of the container and stack upward
@@ -526,6 +535,40 @@ public class SpeakerBox : MonoBehaviour, ISpeakerBox
         }
 
         transform.localScale = to;
+    }
+
+    // Springy scale "pop" — box swells up from a smaller size, overshoots, and settles.
+    private void PlayQuestionPop()
+    {
+        if (!questionScalePop) return;
+        if (scaleCoroutine != null) StopCoroutine(scaleCoroutine);
+        scaleCoroutine = StartCoroutine(QuestionPop());
+    }
+
+    private IEnumerator QuestionPop()
+    {
+        Vector3 target = originalLocalScale;
+        Vector3 start = originalLocalScale * questionPopStartScale;
+        float duration = Mathf.Max(0.01f, questionPopDuration);
+
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float k = EaseOutBack(Mathf.Clamp01(t / duration));
+            transform.localScale = Vector3.LerpUnclamped(start, target, k);
+            yield return null;
+        }
+
+        transform.localScale = target;
+    }
+
+    // Overshoots past 1 then settles back to 1 — the spring in the pop.
+    private static float EaseOutBack(float x)
+    {
+        const float c1 = 1.70158f;
+        const float c3 = c1 + 1f;
+        return 1f + c3 * Mathf.Pow(x - 1f, 3f) + c1 * Mathf.Pow(x - 1f, 2f);
     }
 
     // -------------------------------------------------------------------------

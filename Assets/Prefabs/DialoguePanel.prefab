@@ -419,6 +419,9 @@ MonoBehaviour:
   optionTextColor: {r: 1, g: 1, b: 1, a: 1}
   arrowIndicator: {fileID: 308408133041781867}
   arrowYOffset: 0
+  questionScalePop: 1
+  questionPopStartScale: 0.85
+  questionPopDuration: 0.3
 --- !u!1 &2572861344974030891
 GameObject:
   m_ObjectHideFlags: 0

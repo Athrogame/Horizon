@@ -74,6 +74,15 @@ public class ResolutionManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         RefreshCameraCache();
+
+        // A scene load brings in that scene's cameras with their *authored* rects, wiping any
+        // letterbox/scale we applied earlier. Start() only runs once (on the first scene), so
+        // without re-applying here every scene after the first — most visibly the Main Menu when
+        // returning from gameplay — keeps a full-screen rect instead of the managed viewport.
+        if (isFullscreen)
+            StartCoroutine(ApplyFullscreenViewportNextFrame());
+        else
+            StartCoroutine(ResetViewportsNextFrame());
     }
 
     // Rebuilds the camera list — called after every scene load and resolution change.
