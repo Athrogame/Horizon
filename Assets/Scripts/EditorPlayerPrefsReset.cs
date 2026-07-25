@@ -11,7 +11,8 @@ public static class EditorPlayerPrefsReset
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void ClearOnPlay()
     {
-        PlayerPrefs.DeleteAll();
+        // Spares the options menu's keys — resolution/volume should survive an editor restart.
+        GameSettings.WipeAllExceptSettings();
     }
 }
 #endif

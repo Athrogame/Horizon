@@ -10,13 +10,13 @@ public class MainMenuManager : MonoBehaviour
     public Color selectedColor;
     public Color unselectedColor;
     public List<Image> mainMenuButtons = new List<Image>();
-    public GameObject SettingMenu;
+    [Tooltip("The Settings screen. It owns its own paper animation and input while open.")]
+    public SettingsMenu settingsMenu;
     public GameObject MainMenu;
     private int index;
     public InputActionReference moveActionReference;
     private InputAction moveAction;
     private InputAction Interact;
-    private InputAction cancel;
     public bool IsSettingActive = false;
     public Image fadeImage;
     public float fadeDuration = 1f;
@@ -59,14 +59,6 @@ public class MainMenuManager : MonoBehaviour
     [Tooltip("How fast the selected button tweens to its bigger size. Higher = snappier.")]
     public float scaleLerpSpeed = 12f;
 
-    [Header("Menu slide (sheet from bottom)")]
-    [Tooltip("How long a menu takes to slide up or down, in seconds.")]
-    public float menuSlideDuration = 0.35f;
-
-    // Resting anchoredPositions of the slide-in panels, captured before they're hidden off-screen.
-    private Vector2 settingRestPos;
-    private Coroutine settingRoutine;
-
     // Per-button resting state + individual float parameters, so each floats differently.
     private List<RectTransform> buttonRects = new List<RectTransform>();
     private List<Vector3> startPositions = new List<Vector3>();
@@ -86,7 +78,6 @@ public class MainMenuManager : MonoBehaviour
     {
         moveAction = InputSystem.actions.FindAction("Move");
         Interact = InputSystem.actions.FindAction("Interact");
-        cancel = InputSystem.actions.FindAction("Cancel");
         index = 0;
         selectedColor.a = 255f;
         unselectedColor.a = 255f;
@@ -102,13 +93,6 @@ public class MainMenuManager : MonoBehaviour
         SetupFloating();
         EnsureValidSelection();
         RefreshSelection();
-
-        // Remember where the settings panel is meant to sit, then hide it below the screen.
-        if (SettingMenu != null)
-        {
-            settingRestPos = SettingMenu.GetComponent<RectTransform>().anchoredPosition;
-            SettingMenu.SetActive(false);
-        }
     }
 
     void Update()
@@ -129,6 +113,11 @@ public class MainMenuManager : MonoBehaviour
             RefreshSelection();
         }
 
+        // Settings owns Move/Interact/Cancel while it's up (including its own Cancel-to-close),
+        // so the main menu just waits for it to finish sliding away.
+        if (IsSettingActive && settingsMenu != null && !settingsMenu.IsOpen)
+            IsSettingActive = false;
+
         if(!menuOpen && !IsSettingActive){
             if(moveAction.WasPressedThisFrame()){
                 Vector2 input = moveAction.ReadValue<Vector2>();
@@ -139,10 +128,6 @@ public class MainMenuManager : MonoBehaviour
                 ActivateSelected();
             }
         }
-        if(cancel.WasPressedThisFrame()&&IsSettingActive){
-            SettingsBack();
-        }
-
     }
 
     // Captures each button's resting position/rotation and rolls a unique set of float values for it.
@@ -300,50 +285,14 @@ public class MainMenuManager : MonoBehaviour
     }
 
     public void Settings(){
+        if (settingsMenu == null) return;
         IsSettingActive = true;
-        if (settingRoutine != null) StopCoroutine(settingRoutine);
-        settingRoutine = StartCoroutine(SlidePanel(SettingMenu, settingRestPos, true));
+        settingsMenu.Open();
     }
+
+    /// <summary>Closes Settings from outside (e.g. a UI button). Cancel inside Settings does this itself.</summary>
     public void SettingsBack(){
-        IsSettingActive = false;
-        if (settingRoutine != null) StopCoroutine(settingRoutine);
-        settingRoutine = StartCoroutine(SlidePanel(SettingMenu, settingRestPos, false));
-    }
-    // Slides a panel up from below the screen (show) or back down and hides it (hide),
-    // like a sheet of paper. Works entirely with the Canvas RectTransform.
-    private IEnumerator SlidePanel(GameObject panel, Vector2 restPos, bool show)
-    {
-        if (panel == null) yield break;
-
-        RectTransform rt = panel.GetComponent<RectTransform>();
-
-        // Off-screen position = resting spot dropped down by the full canvas height.
-        float canvasHeight = Screen.height;
-        Canvas rootCanvas = panel.GetComponentInParent<Canvas>();
-        if (rootCanvas != null)
-        {
-            canvasHeight = rootCanvas.rootCanvas.GetComponent<RectTransform>().rect.height;
-        }
-        Vector2 hiddenPos = restPos + Vector2.down * canvasHeight;
-
-        Vector2 from = show ? hiddenPos : restPos;
-        Vector2 to = show ? restPos : hiddenPos;
-
-        panel.SetActive(true);
-        rt.anchoredPosition = from;
-
-        float t = 0f;
-        while (t < menuSlideDuration)
-        {
-            t += Time.unscaledDeltaTime;
-            float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / menuSlideDuration));
-            rt.anchoredPosition = Vector2.Lerp(from, to, k);
-            yield return null;
-        }
-        rt.anchoredPosition = to;
-
-        // Once it's slid back down, actually deactivate it.
-        if (!show) panel.SetActive(false);
+        if (settingsMenu != null) settingsMenu.Close();
     }
 
     IEnumerator FadeAndLoadScene()

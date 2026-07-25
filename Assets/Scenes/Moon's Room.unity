@@ -1682,7 +1682,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 6.1875
+  orthographic size: 7.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -2185,6 +2185,28 @@ MonoBehaviour:
     animationClip: {fileID: 7400000, guid: 698547fb958e02b4583ba31d4d72d32e, type: 2}
     targetGameObject: {fileID: 2103015561}
     setActiveState: 1
+    shakeVirtualCamera: {fileID: 1399551490}
+    shakeDuration: 0.6
+    shakeMagnitude: 8
+    virtualCamera: {fileID: 0}
+    cameraFollowTarget: {fileID: 0}
+  - actionType: 7
+    waitToFinish: 1
+    waitDuration: 1
+    targetToMove: {fileID: 28709193}
+    destinationNode: {fileID: 1690978909}
+    moveSpeed: 4.7
+    useTweening: 1
+    tweenCurve: 1
+    dialogueBox: {fileID: 2070280319}
+    dialogueLines: []
+    targetAnimator: {fileID: 28709194}
+    animationTriggerName: Slepping
+    animationBoolName: 
+    animationBoolValue: 1
+    animationClip: {fileID: 7400000, guid: 698547fb958e02b4583ba31d4d72d32e, type: 2}
+    targetGameObject: {fileID: 1697980599}
+    setActiveState: 0
     shakeVirtualCamera: {fileID: 1399551490}
     shakeDuration: 0.6
     shakeMagnitude: 8
@@ -3318,6 +3340,7 @@ Transform:
   - {fileID: 339827906}
   - {fileID: 792018580}
   - {fileID: 1864644843}
+  - {fileID: 2103015562}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &789342447
@@ -6901,8 +6924,7 @@ Transform:
   m_LocalPosition: {x: -7.0554, y: -2.6492, z: 0}
   m_LocalScale: {x: 1.247042, y: 1.2541481, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2103015562}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1750302312
@@ -9436,7 +9458,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2103015562
 Transform:
   m_ObjectHideFlags: 0
@@ -9445,12 +9467,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2103015561}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5.491784, y: -1.871088, z: 0}
+  m_LocalScale: {x: 0.9976336, y: 1.0033185, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1697980601}
+  m_Father: {fileID: 729180470}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &2103015563
 BoxCollider2D:

@@ -7,9 +7,10 @@ using UnityEngine;
 // real players. Editor runs are skipped (buildGUID is empty there) —
 // EditorPlayerPrefsReset already handles the editor case.
 //
-// NOTE: uses DeleteAll because this project currently stores no save data in
-// PlayerPrefs. If you start saving progress/options to PlayerPrefs, narrow
-// this to only delete cutscene_* keys.
+// NOTE: wipes everything EXCEPT the Settings menu's keys (see
+// GameSettings.WipeAllExceptSettings) — resolution and volume choices should
+// outlive a rebuild. If you start storing progress in PlayerPrefs, narrow this
+// further to only delete cutscene_* keys.
 public static class BuildPrefsResetter
 {
     private const string BuildIdKey = "__lastBuildGUID";
@@ -22,7 +23,7 @@ public static class BuildPrefsResetter
 
         if (PlayerPrefs.GetString(BuildIdKey, "") == current) return;
 
-        PlayerPrefs.DeleteAll();
+        GameSettings.WipeAllExceptSettings();
         PlayerPrefs.SetString(BuildIdKey, current);
         PlayerPrefs.Save();
         Debug.Log($"[BuildPrefsResetter] New build detected ({current}). PlayerPrefs wiped.");

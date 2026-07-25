@@ -43,6 +43,15 @@ public class ResolutionManager : MonoBehaviour
 
     private void Start()
     {
+        GameSettings.ApplyAudio();
+
+        // Whatever the player last chose in the Settings menu wins over the config's launch default.
+        if (GameSettings.HasSavedVideo)
+        {
+            GameSettings.ApplyVideo();
+            return;
+        }
+
         int launchScale = config != null ? config.defaultWindowScale : 1;
         ApplyWindowedScale(launchScale);
     }
@@ -62,13 +71,24 @@ public class ResolutionManager : MonoBehaviour
         if (kb.f11Key.wasPressedThisFrame
             || kb.f4Key.wasPressedThisFrame
             || (altHeld && kb.enterKey.wasPressedThisFrame))
+        {
             ToggleFullscreen();
+            // Keep the Settings menu in sync with the shortcut (record, don't re-apply).
+            GameSettings.RecordFullscreen(isFullscreen);
+        }
 
         // Number keys 1–4 set the windowed scale multiplier directly.
-        if (kb.digit1Key.wasPressedThisFrame) SetWindowScale(1);
-        else if (kb.digit2Key.wasPressedThisFrame) SetWindowScale(2);
-        else if (kb.digit3Key.wasPressedThisFrame) SetWindowScale(3);
-        else if (kb.digit4Key.wasPressedThisFrame) SetWindowScale(4);
+        int shortcutScale = 0;
+        if (kb.digit1Key.wasPressedThisFrame) shortcutScale = 1;
+        else if (kb.digit2Key.wasPressedThisFrame) shortcutScale = 2;
+        else if (kb.digit3Key.wasPressedThisFrame) shortcutScale = 3;
+        else if (kb.digit4Key.wasPressedThisFrame) shortcutScale = 4;
+
+        if (shortcutScale > 0)
+        {
+            SetWindowScale(shortcutScale);
+            GameSettings.RecordWindowScale(shortcutScale);
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
