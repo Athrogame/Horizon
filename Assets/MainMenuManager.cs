@@ -14,7 +14,9 @@ public class MainMenuManager : MonoBehaviour
     public SettingsMenu settingsMenu;
     public GameObject MainMenu;
     private int index;
+    [Header("Input Actions (drag from your Input Action Asset)")]
     public InputActionReference moveActionReference;
+    public InputActionReference interactActionReference;
     private InputAction moveAction;
     private InputAction Interact;
     public bool IsSettingActive = false;
@@ -76,8 +78,8 @@ public class MainMenuManager : MonoBehaviour
 
     void Start()
     {
-        moveAction = InputSystem.actions.FindAction("Move");
-        Interact = InputSystem.actions.FindAction("Interact");
+        moveAction = moveActionReference     != null ? moveActionReference.action     : InputSystem.actions.FindAction("Move");
+        Interact   = interactActionReference != null ? interactActionReference.action : InputSystem.actions.FindAction("Interact");
         index = 0;
         selectedColor.a = 255f;
         unselectedColor.a = 255f;
@@ -250,11 +252,13 @@ public class MainMenuManager : MonoBehaviour
         Image selected = mainMenuButtons[index];
         if (selected == null) return;
 
+        Debug.Log($"[MainMenu] Activating button at index {index}: {selected.gameObject.name}");
+
         if (selected == playGameButton)
         {
             if (AnySaveExists() && SaveSlotSelectMenu.I != null)
             {
-                if (MainMenu != null) MainMenu.SetActive(false);   // hide the main menu behind the load menu
+                if (MainMenu != null) MainMenu.SetActive(false);
                 mainMenuHiddenForLoad = true;
                 SaveSlotSelectMenu.I.Open(SaveSlotSelectMenu.SaveMenuMode.Load);
             }
@@ -267,6 +271,11 @@ public class MainMenuManager : MonoBehaviour
         else if (selected == settingsButton)
         {
             Settings();
+        }
+        else
+        {
+            Debug.LogWarning($"[MainMenu] Button '{selected.gameObject.name}' not matched to any role. " +
+                             $"Is it assigned to settingsButton, playGameButton, or newGameButton in the Inspector?");
         }
     }
 
@@ -285,7 +294,12 @@ public class MainMenuManager : MonoBehaviour
     }
 
     public void Settings(){
-        if (settingsMenu == null) return;
+        if (settingsMenu == null)
+        {
+            Debug.LogError("[MainMenu] Settings() called but settingsMenu is not assigned in the Inspector!");
+            return;
+        }
+        Debug.Log("[MainMenu] Opening settings.");
         IsSettingActive = true;
         settingsMenu.Open();
     }

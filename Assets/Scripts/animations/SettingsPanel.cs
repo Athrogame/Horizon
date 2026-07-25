@@ -207,6 +207,10 @@ public class SettingsPanel : MonoBehaviour
         RectTransform parent = arrow.parent as RectTransform;
         if (parent == null) return;
 
+        // Force the canvas layout to finish calculating before reading any rect sizes or positions.
+        // Without this, rect.xMin / rect.center are all zero on the first frame the panel is shown.
+        Canvas.ForceUpdateCanvases();
+
         // Middle of the target's left edge, in the arrow's parent space.
         Vector3 leftEdgeWorld = target.TransformPoint(new Vector3(target.rect.xMin, target.rect.center.y, 0f));
         Vector3 leftEdgeLocal = parent.InverseTransformPoint(leftEdgeWorld);
@@ -272,6 +276,7 @@ public class SettingsPanel : MonoBehaviour
     {
         CaptureRest();
         if (paperRoutine != null) StopCoroutine(paperRoutine);
+        gameObject.SetActive(true);   // must be active before StartCoroutine can run on this object
         paperRoutine = StartCoroutine(PaperRoutine(show));
         return paperRoutine;
     }

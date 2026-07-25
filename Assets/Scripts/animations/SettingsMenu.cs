@@ -63,15 +63,28 @@ public class SettingsMenu : MonoBehaviour
     // The Interact press that opened the menu is still down on the first frame; don't act on it.
     private bool ignoreInteractThisFrame;
 
+    [Header("Input Actions (drag from your Input Action Asset)")]
+    [SerializeField] private InputActionReference moveActionRef;
+    [SerializeField] private InputActionReference interactActionRef;
+    [SerializeField] private InputActionReference cancelActionRef;
+
     private InputAction moveAction;
     private InputAction interactAction;
     private InputAction cancelAction;
 
     private void Start()
     {
-        moveAction = InputSystem.actions.FindAction("Move");
-        interactAction = InputSystem.actions.FindAction("Interact");
-        cancelAction = InputSystem.actions.FindAction("Cancel");
+        moveAction     = moveActionRef     != null ? moveActionRef.action     : InputSystem.actions.FindAction("Move");
+        interactAction = interactActionRef != null ? interactActionRef.action : InputSystem.actions.FindAction("Interact");
+        cancelAction   = cancelActionRef   != null ? cancelActionRef.action   : InputSystem.actions.FindAction("Cancel");
+
+        if (moveAction     == null) Debug.LogError("[SettingsMenu] 'Move' action not found. Drag it into Move Action Ref in the Inspector.");
+        if (interactAction == null) Debug.LogError("[SettingsMenu] 'Interact' action not found. Drag it into Interact Action Ref in the Inspector — without this you cannot enter sections or confirm choices.");
+        if (cancelAction   == null) Debug.LogWarning("[SettingsMenu] 'Cancel' action not found. Drag it into Cancel Action Ref in the Inspector — without this you cannot back out of the menu.");
+
+        moveAction?.Enable();
+        interactAction?.Enable();
+        cancelAction?.Enable();
 
         foreach (Tab tab in tabs)
         {
