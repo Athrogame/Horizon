@@ -76,7 +76,13 @@ public class SettingsMenu : MonoBehaviour
     {
         moveAction     = moveActionRef     != null ? moveActionRef.action     : InputSystem.actions.FindAction("Move");
         interactAction = interactActionRef != null ? interactActionRef.action : InputSystem.actions.FindAction("Interact");
-        cancelAction   = cancelActionRef   != null ? cancelActionRef.action   : InputSystem.actions.FindAction("Cancel");
+
+        // The Cancel Action Ref in the Inspector is wired to the UI map's Cancel (Escape/gamepad
+        // East), not the Player map's Cancel (X) — the same key everything else in this menu uses.
+        // Go straight to the Player map's Cancel so X actually backs out, regardless of what's
+        // dragged into the Inspector slot.
+        cancelAction = InputSystem.actions.FindAction("Player/Cancel")
+                     ?? (cancelActionRef != null ? cancelActionRef.action : InputSystem.actions.FindAction("Cancel"));
 
         if (moveAction     == null) Debug.LogError("[SettingsMenu] 'Move' action not found. Drag it into Move Action Ref in the Inspector.");
         if (interactAction == null) Debug.LogError("[SettingsMenu] 'Interact' action not found. Drag it into Interact Action Ref in the Inspector — without this you cannot enter sections or confirm choices.");
@@ -110,23 +116,21 @@ public class SettingsMenu : MonoBehaviour
         rowIndex = 0;
         ignoreInteractThisFrame = true;
 
-        SeedFromSavedSettings();
         RefreshTabColors();
 
-        // Show the starting tab's page immediately — it rides in with the whole sheet.
+        // Show the starting tab's page immediately — it rides in with the whole sheet. Activate it
+        // BEFORE seeding values: arrow placement reads real layout, and an inactive object's rect
+        // isn't kept up to date, so seeding first left the arrows parked in the wrong place.
         for (int i = 0; i < tabs.Count; i++)
         {
             if (tabs[i].panel == null) continue;
             if (i == tabIndex)
-            {
                 tabs[i].panel.gameObject.SetActive(true);
-                tabs[i].panel.ResetCursors();
-            }
             else
-            {
                 tabs[i].panel.HideInstant();
-            }
         }
+
+        SeedFromSavedSettings();
 
         StartCoroutine(OpenRoutine());
     }

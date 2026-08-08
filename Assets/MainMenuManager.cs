@@ -58,6 +58,8 @@ public class MainMenuManager : MonoBehaviour
     [Header("Selection")]
     [Tooltip("Amount added to the selected button's scale on each axis (added on select, removed on deselect).")]
     public float selectedScaleAmount = 0.15f;
+    [Tooltip("Extra scale added on top of that, X axis only — makes the selected button stretch wider without growing as tall.")]
+    public float selectedScaleAmountExtraX = 0.5f;
     [Tooltip("How fast the selected button tweens to its bigger size. Higher = snappier.")]
     public float scaleLerpSpeed = 12f;
 
@@ -189,7 +191,7 @@ public class MainMenuManager : MonoBehaviour
 
             // Smoothly tween scale toward the selected/unselected target.
             Vector3 targetScale = (i == index)
-                ? startScales[i] + new Vector3(selectedScaleAmount, selectedScaleAmount, selectedScaleAmount)
+                ? startScales[i] + new Vector3(selectedScaleAmount + selectedScaleAmountExtraX, selectedScaleAmount, selectedScaleAmount)
                 : startScales[i];
             rt.localScale = Vector3.Lerp(rt.localScale, targetScale, Time.deltaTime * scaleLerpSpeed);
         }

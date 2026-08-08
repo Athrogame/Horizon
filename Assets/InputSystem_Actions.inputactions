@@ -463,6 +463,17 @@
                 },
                 {
                     "name": "",
+                    "id": "e6f0e6b1-6a3b-4e0e-8f0a-2c6a1c2e9d7b",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Cancel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "c642585c-c513-4f2a-807f-1192dddcde80",
                     "path": "<SwitchProControllerHID>/buttonSouth",
                     "interactions": "",

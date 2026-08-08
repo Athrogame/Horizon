@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -47,6 +48,8 @@ public class SettingsPanel : MonoBehaviour
     public RectTransform sectionArrow;
     [Tooltip("Horizontal gap between an arrow's right edge and the thing it points at, in UI units.")]
     public float arrowGap = 8f;
+    [Tooltip("Fine nudge for the section arrow only (the one beside 'Scale:' / 'Fullscreen'), in UI units — X = right, Y = up.")]
+    public Vector2 sectionArrowOffset = new Vector2(6f, 4f);
 
     [Header("Value rows")]
     [Tooltip("Character drawn for each filled step of a value row's bar.")]
@@ -151,7 +154,7 @@ public class SettingsPanel : MonoBehaviour
         }
 
         sectionArrow.gameObject.SetActive(true);
-        PlaceArrowLeftOf(sectionArrow, rows[row].label);
+        PlaceArrowLeftOf(sectionArrow, rows[row].label, sectionArrowOffset);
     }
 
     /// <summary>Moves a row's option arrow beside the given value. Used both for browsing and confirming.</summary>
@@ -202,27 +205,55 @@ public class SettingsPanel : MonoBehaviour
     // Works off localPosition rather than anchoredPosition so it doesn't matter how the arrow is
     // anchored, and converts through world space so the arrow and its target can live under
     // different parents (e.g. one shared section arrow pointing at rows nested in sub-groups).
-    private void PlaceArrowLeftOf(RectTransform arrow, RectTransform target)
+    private void PlaceArrowLeftOf(RectTransform arrow, RectTransform target, Vector2 extraOffset = default)
     {
         RectTransform parent = arrow.parent as RectTransform;
         if (parent == null) return;
 
-        // Force the canvas layout to finish calculating before reading any rect sizes or positions.
-        // Without this, rect.xMin / rect.center are all zero on the first frame the panel is shown.
+        // Force any layout groups to finish rebuilding, then the canvas geometry, before reading
+        // any rect sizes or positions. Without this, rect.xMin / rect.center can be stale or zero
+        // on the first frame the panel (or a layout group inside it) is (re)activated.
+        Canvas rootCanvas = GetComponentInParent<Canvas>();
+        if (rootCanvas != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rootCanvas.rootCanvas.GetComponent<RectTransform>());
         Canvas.ForceUpdateCanvases();
 
+        // Every label/option/arrow here sits in an oversized box copy-pasted from a shared text
+        // template, with the glyph off-centre inside it by a different amount each time depending
+        // on that box's own padding — so BOTH the edge we aim at and the arrow we're placing need
+        // to be measured by their actual rendered glyph bounds, not their RectTransform box.
+        TextMeshProUGUI targetText = target.GetComponent<TextMeshProUGUI>();
+        Vector2 targetLeftEdge = new Vector2(target.rect.xMin, target.rect.center.y);
+        if (targetText != null)
+        {
+            targetText.ForceMeshUpdate();
+            Bounds tb = targetText.textBounds;
+            targetLeftEdge = new Vector2(tb.min.x, tb.center.y);
+        }
+
         // Middle of the target's left edge, in the arrow's parent space.
-        Vector3 leftEdgeWorld = target.TransformPoint(new Vector3(target.rect.xMin, target.rect.center.y, 0f));
+        Vector3 leftEdgeWorld = target.TransformPoint(new Vector3(targetLeftEdge.x, targetLeftEdge.y, 0f));
         Vector3 leftEdgeLocal = parent.InverseTransformPoint(leftEdgeWorld);
 
-        // Where the arrow's CENTRE should end up.
-        float centreX = leftEdgeLocal.x - arrowGap - arrow.rect.width * 0.5f;
+        TextMeshProUGUI arrowText = arrow.GetComponent<TextMeshProUGUI>();
+        float glyphHalfWidth = arrow.rect.width * 0.5f;
+        Vector2 glyphCentreOffset = Vector2.zero;   // how far the glyph's own centre sits from the box's pivot
+        if (arrowText != null)
+        {
+            arrowText.ForceMeshUpdate();
+            Bounds b = arrowText.textBounds;
+            glyphHalfWidth = b.extents.x;
+            glyphCentreOffset = new Vector2(b.center.x, b.center.y);
+        }
+
+        // Where the glyph's CENTRE should end up.
+        float centreX = leftEdgeLocal.x - arrowGap - glyphHalfWidth;
         float centreY = leftEdgeLocal.y;
 
-        // localPosition moves the arrow's PIVOT, which isn't necessarily its centre.
+        // localPosition moves the arrow's PIVOT, which isn't necessarily its centre or the glyph's.
         Vector3 pos = arrow.localPosition;
-        pos.x = centreX + (arrow.pivot.x - 0.5f) * arrow.rect.width;
-        pos.y = centreY + (arrow.pivot.y - 0.5f) * arrow.rect.height;
+        pos.x = centreX + (arrow.pivot.x - 0.5f) * arrow.rect.width - glyphCentreOffset.x + extraOffset.x;
+        pos.y = centreY + (arrow.pivot.y - 0.5f) * arrow.rect.height - glyphCentreOffset.y + extraOffset.y;
         arrow.localPosition = pos;
     }
 
