@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/HouseHallway.unity
     guid: 66e9d12e1a59f4e5d83c514036a76cd4
+  - enabled: 1
+    path: Assets/Scenes/Homekitchen.unity
+    guid: e4dc3365d61c94bcea6efc122898aec3
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
