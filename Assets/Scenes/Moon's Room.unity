@@ -2369,7 +2369,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 0
+  orthographic size: 1
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -11016,6 +11016,7 @@ MonoBehaviour:
   rows: []
   sectionArrow: {fileID: 0}
   arrowGap: 8
+  sectionArrowOffset: {x: 6, y: 4}
   barFilledChar: '#'
   barEmptyChar: '-'
   chosenColor: {r: 1, g: 1, b: 1, a: 1}
