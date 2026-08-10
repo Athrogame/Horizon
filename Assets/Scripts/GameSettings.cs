@@ -17,8 +17,8 @@ public static class GameSettings
     private const string MusicKey = Prefix + "volMusic";
     private const string SfxKey = Prefix + "volSfx";
 
-    /// <summary>Volumes are whole steps 0–10, matching the arrow-key menu (no fractional slider).</summary>
-    public const int MaxVolumeStep = 10;
+    /// <summary>Volumes are a percentage, 0–100, adjusted by the settings menu in steps of 5 (or 1 with Shift).</summary>
+    public const int MaxVolume = 100;
 
     private static readonly string[] AllKeys = { ScaleKey, FullscreenKey, MasterKey, MusicKey, SfxKey };
 
@@ -53,25 +53,25 @@ public static class GameSettings
 
     // ---------------------------------------------------------------- audio
 
-    /// <summary>0–10. Drives AudioListener.volume, so it affects everything at once.</summary>
+    /// <summary>0–100. Drives AudioListener.volume, so it affects everything at once.</summary>
     public static int MasterVolume
     {
         get => ReadVolume(MasterKey);
         set
         {
             WriteVolume(MasterKey, value);
-            AudioListener.volume = MasterVolume / (float)MaxVolumeStep;
+            AudioListener.volume = MasterVolume / (float)MaxVolume;
         }
     }
 
-    /// <summary>0–10. Read by music AudioSources as a multiplier — nothing applies it globally.</summary>
+    /// <summary>0–100. Read by music AudioSources as a multiplier — nothing applies it globally.</summary>
     public static int MusicVolume
     {
         get => ReadVolume(MusicKey);
         set => WriteVolume(MusicKey, value);
     }
 
-    /// <summary>0–10. Read by SFX AudioSources as a multiplier — nothing applies it globally.</summary>
+    /// <summary>0–100. Read by SFX AudioSources as a multiplier — nothing applies it globally.</summary>
     public static int SfxVolume
     {
         get => ReadVolume(SfxKey);
@@ -79,16 +79,16 @@ public static class GameSettings
     }
 
     /// <summary>MusicVolume as a 0–1 multiplier, for setting an AudioSource's volume.</summary>
-    public static float MusicScalar => MusicVolume / (float)MaxVolumeStep;
+    public static float MusicScalar => MusicVolume / (float)MaxVolume;
 
     /// <summary>SfxVolume as a 0–1 multiplier, for setting an AudioSource's volume.</summary>
-    public static float SfxScalar => SfxVolume / (float)MaxVolumeStep;
+    public static float SfxScalar => SfxVolume / (float)MaxVolume;
 
-    private static int ReadVolume(string key) => Mathf.Clamp(PlayerPrefs.GetInt(key, MaxVolumeStep), 0, MaxVolumeStep);
+    private static int ReadVolume(string key) => Mathf.Clamp(PlayerPrefs.GetInt(key, MaxVolume), 0, MaxVolume);
 
     private static void WriteVolume(string key, int steps)
     {
-        PlayerPrefs.SetInt(key, Mathf.Clamp(steps, 0, MaxVolumeStep));
+        PlayerPrefs.SetInt(key, Mathf.Clamp(steps, 0, MaxVolume));
         PlayerPrefs.Save();
     }
 
@@ -100,7 +100,7 @@ public static class GameSettings
     /// <summary>Pushes the saved volumes onto the live game. Safe to call before anything else exists.</summary>
     public static void ApplyAudio()
     {
-        AudioListener.volume = MasterVolume / (float)MaxVolumeStep;
+        AudioListener.volume = MasterVolume / (float)MaxVolume;
     }
 
     /// <summary>

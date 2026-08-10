@@ -34,10 +34,19 @@ public class SettingsPanel : MonoBehaviour
         [Tooltip("Tick for a row that holds a NUMBER the player nudges left/right (e.g. Master volume) " +
                  "rather than a list of separate choices.")]
         public bool isValueRow;
-        [Tooltip("The single text that shows the value, e.g. '▮▮▮▮▮▯▯▯▯▯ 50%'. The option arrow points at it.")]
+        [Tooltip("The text that shows the value as a percentage, e.g. '50%'. The option arrow points at it.")]
         public TextMeshProUGUI valueLabel;
+        [Tooltip("The segmented bar (VolumeBar prefab instance) that visualises the value. Optional.")]
+        public SegmentedBar bar;
         [Tooltip("Highest value this row can reach. The lowest is always 0.")]
-        public int maxValue = 10;
+        public int maxValue = 100;
+
+        // Runtime-only — set via SetRowDisabled, not authored in the Inspector.
+        [NonSerialized] public bool disabled;
+
+        // Runtime-only — set via SetMaxSelectableOption. Options above this index (e.g. window
+        // scales too big for the current display) are greyed out and unreachable.
+        [NonSerialized] public int maxSelectableOption = int.MaxValue;
     }
 
     [Header("Rows (top to bottom — the section arrow moves between these)")]
@@ -50,12 +59,6 @@ public class SettingsPanel : MonoBehaviour
     public float arrowGap = 8f;
     [Tooltip("Fine nudge for the section arrow only (the one beside 'Scale:' / 'Fullscreen'), in UI units — X = right, Y = up.")]
     public Vector2 sectionArrowOffset = new Vector2(6f, 4f);
-
-    [Header("Value rows")]
-    [Tooltip("Character drawn for each filled step of a value row's bar.")]
-    public string barFilledChar = "#";
-    [Tooltip("Character drawn for each empty step of a value row's bar.")]
-    public string barEmptyChar = "-";
 
     [Header("Chosen-value highlight")]
     [Tooltip("Colour of the value currently in effect on each row.")]
@@ -138,6 +141,42 @@ public class SettingsPanel : MonoBehaviour
     {
         SetChosen(row, option);
         onOptionChosen?.Invoke(row, GetChosen(row));
+    }
+
+    /// <summary>True if the row is disabled (see <see cref="SetRowDisabled"/>) — skipped by navigation.</summary>
+    public bool IsRowDisabled(int row) => IsValidRow(row) && rows[row].disabled;
+
+    /// <summary>
+    /// Greys a row out and marks it for <see cref="SettingsMenu"/> to skip over — e.g. "Exit to
+    /// Title Screen" while Settings is opened from the Main Menu, where it doesn't apply.
+    /// </summary>
+    public void SetRowDisabled(int row, bool disabled)
+    {
+        if (!IsValidRow(row)) return;
+        rows[row].disabled = disabled;
+        if (rows[row].label != null)
+        {
+            TextMeshProUGUI text = rows[row].label.GetComponent<TextMeshProUGUI>();
+            if (text != null) text.color = disabled ? unchosenColor : chosenColor;
+        }
+    }
+
+    /// <summary>Highest option index still selectable on a choice row. int.MaxValue means uncapped.</summary>
+    public int GetMaxSelectableOption(int row) => IsValidRow(row) ? rows[row].maxSelectableOption : int.MaxValue;
+
+    /// <summary>
+    /// Caps a choice row to its first (maxOption + 1) options — e.g. hiding window-scale options
+    /// too big for the current display. Capped options stay visible but greyed out and
+    /// unreachable via Left/Right; pass int.MaxValue to remove the cap. If the row's current value
+    /// is above the new cap, clamp it down so a greyed-out option is never shown as "chosen".
+    /// </summary>
+    public void SetMaxSelectableOption(int row, int maxOption)
+    {
+        if (!IsValidRow(row)) return;
+        rows[row].maxSelectableOption = maxOption;
+        EnsureChosenList();
+        if (chosenIndices[row] > maxOption) SetChosen(row, maxOption);
+        else RefreshRowColors(row);
     }
 
     // ---------------------------------------------------------------- cursors
@@ -262,13 +301,30 @@ public class SettingsPanel : MonoBehaviour
         if (!IsValidRow(row)) return;
         EnsureChosenList();
 
+        // A disabled row always reads as greyed out, even if its "chosen option" coloring below
+        // would otherwise repaint the same text object white (e.g. an action row whose one Option
+        // entry is the same text as its Label) — this runs on every ResetCursors(), so without this
+        // check a disabled row would un-grey itself the next time the menu opens or a tab switches.
+        if (rows[row].disabled)
+        {
+            if (rows[row].label != null)
+            {
+                TextMeshProUGUI text = rows[row].label.GetComponent<TextMeshProUGUI>();
+                if (text != null) text.color = unchosenColor;
+            }
+            return;
+        }
+
         if (rows[row].isValueRow)
         {
+            int value = chosenIndices[row];
+            int max = rows[row].maxValue;
             if (rows[row].valueLabel != null)
             {
-                rows[row].valueLabel.text = BuildBar(chosenIndices[row], rows[row].maxValue);
+                rows[row].valueLabel.text = (max > 0 ? Mathf.RoundToInt(value * 100f / max) : 0) + "%";
                 rows[row].valueLabel.color = chosenColor;
             }
+            if (rows[row].bar != null) rows[row].bar.SetValue(value, max);
             return;
         }
 
@@ -276,17 +332,6 @@ public class SettingsPanel : MonoBehaviour
         for (int i = 0; i < options.Count; i++)
             if (options[i] != null)
                 options[i].color = (i == chosenIndices[row]) ? chosenColor : unchosenColor;
-    }
-
-    // "###-------  30%" — a fixed-width bar plus the percentage, so it reads at a glance.
-    private string BuildBar(int value, int max)
-    {
-        if (max <= 0) return "0%";
-        var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < max; i++)
-            sb.Append(i < value ? barFilledChar : barEmptyChar);
-        sb.Append("  ").Append(Mathf.RoundToInt(value * 100f / max)).Append('%');
-        return sb.ToString();
     }
 
     private bool IsValidRow(int row) => row >= 0 && row < rows.Count;
@@ -310,6 +355,25 @@ public class SettingsPanel : MonoBehaviour
         gameObject.SetActive(true);   // must be active before StartCoroutine can run on this object
         paperRoutine = StartCoroutine(PaperRoutine(show));
         return paperRoutine;
+    }
+
+    /// <summary>
+    /// Activates the page — so it (and its children) truly finish initialising, which doesn't
+    /// happen for a child set active while its parent is still inactive — while keeping it
+    /// parked off screen at its hidden position, without starting the slide-in animation. Lets
+    /// code that needs to measure real layout (e.g. seeding arrow positions) do so first, so
+    /// nothing is measured on a half-initialised hierarchy and then visibly snaps into place once
+    /// Play() finishes.
+    /// </summary>
+    public void PrepareHidden()
+    {
+        CaptureRest();
+        if (paperRoutine != null) { StopCoroutine(paperRoutine); paperRoutine = null; }
+        gameObject.SetActive(true);
+        if (rect == null) return;
+        rect.anchoredPosition = restPos;   // measure HiddenDrop() from the true resting spot
+        rect.anchoredPosition = restPos + Vector2.down * HiddenDrop();
+        rect.localScale = baseScale * slideStartScale;
     }
 
     /// <summary>Hides the page instantly, with no animation (used when the menu first initialises).</summary>

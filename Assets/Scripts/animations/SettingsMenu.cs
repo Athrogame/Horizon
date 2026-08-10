@@ -63,6 +63,23 @@ public class SettingsMenu : MonoBehaviour
     // The Interact press that opened the menu is still down on the first frame; don't act on it.
     private bool ignoreInteractThisFrame;
 
+    [Header("Exit tab")]
+    [Tooltip("Row index of \"Return to Desktop\" (quit) on the Exit page.")]
+    public int exitQuitRow = 0;
+    [Tooltip("Row index of \"Exit to Title Screen\" on the Exit page.")]
+    public int exitTitleRow = 1;
+    [Tooltip("Untick if this Settings instance can be reached from inside a level (e.g. a future " +
+             "pause menu) — leave ticked for the Main Menu, where \"Exit to Title Screen\" doesn't apply.")]
+    public bool disableExitToTitle = true;
+    [Tooltip("Shown while browsing the quit row, warning that unsaved data will be lost. Hidden the rest of the time.")]
+    public GameObject exitQuitWarning;
+
+    [Header("Volume step sizes")]
+    [Tooltip("How much Left/Right nudges a volume row per press.")]
+    public int volumeStep = 5;
+    [Tooltip("How much Left/Right nudges a volume row per press while the Sprint action (Shift / gamepad stick-click) is held.")]
+    public int volumeStepFine = 1;
+
     [Header("Input Actions (drag from your Input Action Asset)")]
     [SerializeField] private InputActionReference moveActionRef;
     [SerializeField] private InputActionReference interactActionRef;
@@ -71,6 +88,7 @@ public class SettingsMenu : MonoBehaviour
     private InputAction moveAction;
     private InputAction interactAction;
     private InputAction cancelAction;
+    private InputAction sprintAction;   // reused as the volume slider's fine-step modifier
 
     private void Start()
     {
@@ -84,6 +102,10 @@ public class SettingsMenu : MonoBehaviour
         cancelAction = InputSystem.actions.FindAction("Player/Cancel")
                      ?? (cancelActionRef != null ? cancelActionRef.action : InputSystem.actions.FindAction("Cancel"));
 
+        // Reuses the Player map's Sprint action (Shift / gamepad stick-click) as the volume
+        // slider's fine-step modifier — nothing else needs it while the menu has input focus.
+        sprintAction = InputSystem.actions.FindAction("Player/Sprint");
+
         if (moveAction     == null) Debug.LogError("[SettingsMenu] 'Move' action not found. Drag it into Move Action Ref in the Inspector.");
         if (interactAction == null) Debug.LogError("[SettingsMenu] 'Interact' action not found. Drag it into Interact Action Ref in the Inspector — without this you cannot enter sections or confirm choices.");
         if (cancelAction   == null) Debug.LogWarning("[SettingsMenu] 'Cancel' action not found. Drag it into Cancel Action Ref in the Inspector — without this you cannot back out of the menu.");
@@ -91,6 +113,7 @@ public class SettingsMenu : MonoBehaviour
         moveAction?.Enable();
         interactAction?.Enable();
         cancelAction?.Enable();
+        sprintAction?.Enable();
 
         foreach (Tab tab in tabs)
         {
@@ -102,6 +125,13 @@ public class SettingsMenu : MonoBehaviour
         }
 
         if (rootPaper != null) rootPaper.HideInstant();
+
+        if (disableExitToTitle)
+            foreach (Tab tab in tabs)
+                if (tab.kind == TabKind.Exit && tab.panel != null)
+                    tab.panel.SetRowDisabled(exitTitleRow, true);
+
+        if (exitQuitWarning != null) exitQuitWarning.SetActive(false);
     }
 
     // ---------------------------------------------------------------- open / close
@@ -117,6 +147,12 @@ public class SettingsMenu : MonoBehaviour
         ignoreInteractThisFrame = true;
 
         RefreshTabColors();
+
+        // Activate the whole sheet FIRST (parked off screen, not yet sliding) — a page set active
+        // while rootPaper is still inactive never finishes initialising (TMP/layout skip their
+        // setup for a child under an inactive ancestor), which used to leave arrows measured wrong
+        // for one frame and visibly snap once OpenRoutine re-measured them after the slide-in.
+        if (rootPaper != null) rootPaper.PrepareHidden();
 
         // Show the starting tab's page immediately — it rides in with the whole sheet. Activate it
         // BEFORE seeding values: arrow placement reads real layout, and an inactive object's rect
@@ -216,7 +252,9 @@ public class SettingsMenu : MonoBehaviour
                 if (panel.IsValueRow(rowIndex))
                 {
                     // Volumes clamp at the ends and apply as you move, so you hear the change.
-                    int value = Mathf.Clamp(optionIndex + dir, 0, count - 1);
+                    bool fineStep = sprintAction != null && sprintAction.IsPressed();
+                    int step = fineStep ? volumeStepFine : volumeStep;
+                    int value = Mathf.Clamp(optionIndex + dir * step, 0, count - 1);
                     if (value == optionIndex) return;
                     optionIndex = value;
                     panel.ChooseOption(rowIndex, optionIndex);
@@ -224,7 +262,10 @@ public class SettingsMenu : MonoBehaviour
                 else
                 {
                     // Choice rows wrap, and only move the arrow — nothing applies until Interact.
-                    optionIndex = (optionIndex + dir + count) % count;
+                    // Wraps within the selectable range only, so a capped-off option (e.g. a
+                    // window scale too big for this display) is never reachable.
+                    int range = Mathf.Min(count - 1, panel.GetMaxSelectableOption(rowIndex)) + 1;
+                    optionIndex = (optionIndex + dir + range) % range;
                     panel.PointOptionArrow(rowIndex, optionIndex);
                 }
                 break;
@@ -244,7 +285,13 @@ public class SettingsMenu : MonoBehaviour
 
         if (focus != Focus.Sections || panel == null || panel.RowCount == 0) return;
 
-        rowIndex = (rowIndex + dir + panel.RowCount) % panel.RowCount;
+        int next = rowIndex;
+        for (int i = 0; i < panel.RowCount; i++)
+        {
+            next = (next + dir + panel.RowCount) % panel.RowCount;
+            if (!panel.IsRowDisabled(next)) break;   // stops on the first enabled row it finds
+        }
+        rowIndex = next;
         panel.PointSectionArrow(rowIndex);
     }
 
@@ -259,19 +306,29 @@ public class SettingsMenu : MonoBehaviour
                 break;
 
             case Focus.Sections:
-                if (panel == null || panel.OptionCount(rowIndex) == 0) return;
+                if (panel == null || panel.OptionCount(rowIndex) == 0 || panel.IsRowDisabled(rowIndex)) return;
                 focus = Focus.Options;
                 optionIndex = panel.GetChosen(rowIndex);
-                panel.PointOptionArrow(rowIndex, optionIndex);
+                // A value row's arrow always rests beside the bar/percentage regardless of the
+                // option index (ResetCursors already parked it there) — re-pointing it here just
+                // caused a visible jump toward the bar for no reason. Choice rows still need this,
+                // since their target changes per option.
+                if (!panel.IsValueRow(rowIndex)) panel.PointOptionArrow(rowIndex, optionIndex);
+                if (IsExitQuitRow(rowIndex) && exitQuitWarning != null) exitQuitWarning.SetActive(true);
                 break;
 
             case Focus.Options:
                 if (panel == null) return;
                 panel.ChooseOption(rowIndex, optionIndex);   // applies + saves via ApplyChoice
                 focus = Focus.Sections;
+                if (exitQuitWarning != null) exitQuitWarning.SetActive(false);
                 break;
         }
     }
+
+    // True if the currently-focused row is the Exit tab's "Return to Desktop" (quit) row.
+    private bool IsExitQuitRow(int row) =>
+        tabIndex >= 0 && tabIndex < tabs.Count && tabs[tabIndex].kind == TabKind.Exit && row == exitQuitRow;
 
     private void Back()
     {
@@ -281,7 +338,11 @@ public class SettingsMenu : MonoBehaviour
         {
             case Focus.Options:
                 // Snap the arrow back to whatever is actually in effect — nothing was applied.
-                if (panel != null) panel.PointOptionArrow(rowIndex, panel.GetChosen(rowIndex));
+                // Value rows don't need this: their arrow was never moved in the first place (see
+                // Confirm()), so there's nothing to snap back.
+                if (panel != null && !panel.IsValueRow(rowIndex))
+                    panel.PointOptionArrow(rowIndex, panel.GetChosen(rowIndex));
+                if (exitQuitWarning != null) exitQuitWarning.SetActive(false);
                 focus = Focus.Sections;
                 break;
 
@@ -303,6 +364,8 @@ public class SettingsMenu : MonoBehaviour
 
         focus = Focus.Sections;
         rowIndex = 0;
+        for (int i = 0; i < panel.RowCount && panel.IsRowDisabled(rowIndex); i++)
+            rowIndex = (rowIndex + 1) % panel.RowCount;
         panel.PointSectionArrow(rowIndex);
     }
 
@@ -357,6 +420,11 @@ public class SettingsMenu : MonoBehaviour
                 case TabKind.Video:
                     tab.panel.SetChosen(0, GameSettings.WindowScale - 1);   // rows: 0 = scale, 1 = fullscreen
                     tab.panel.SetChosen(1, GameSettings.Fullscreen ? 0 : 1); // options: 0 = Yes, 1 = No
+
+                    // Grey out/skip scale options too big for this display — re-checked on every
+                    // open in case the window moved to a different monitor since last time.
+                    int maxScale = ResolutionManager.Instance != null ? ResolutionManager.Instance.GetMaxFittingScale() : 4;
+                    tab.panel.SetMaxSelectableOption(0, maxScale - 1);
                     break;
 
                 case TabKind.Audio:
@@ -366,7 +434,8 @@ public class SettingsMenu : MonoBehaviour
                     break;
 
                 case TabKind.Exit:
-                    tab.panel.SetChosen(0, 1);                              // default to "No"
+                    // Both rows are single-action rows (Return to Desktop / Exit to Title Screen),
+                    // not a choice to seed — chosenIndices already defaults to 0 for each.
                     break;
             }
             tab.panel.ResetCursors();
@@ -390,8 +459,10 @@ public class SettingsMenu : MonoBehaviour
                 break;
 
             case TabKind.Exit:
-                if (option == 0) Quit();
-                else Back();   // "No" — same as backing out of the row
+                if (row == exitQuitRow) Quit();
+                // exitTitleRow is disabled (see disableExitToTitle) so this shouldn't normally fire
+                // from the Main Menu; Back() is just a safe fallback if it somehow does.
+                else if (row == exitTitleRow) Back();
                 break;
         }
     }

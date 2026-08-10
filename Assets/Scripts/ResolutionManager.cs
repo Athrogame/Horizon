@@ -111,6 +111,12 @@ public class ResolutionManager : MonoBehaviour
         managedCameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
     }
 
+    /// <summary>
+    /// Largest window scale (1-4) that fits on the current display without the window exceeding
+    /// it — used by the Settings menu to grey out/block Scale options too big for this screen.
+    /// </summary>
+    public int GetMaxFittingScale() => config != null ? Mathf.Clamp(CalculateFullscreenIntegerScale(), 1, 4) : 4;
+
     // Returns the largest integer N where: baseWidth*N <= logicalW AND baseHeight*N <= logicalH.
     // Uses logical (DPI-adjusted) pixels so the scale matches correctly on high-DPI displays.
     private int CalculateFullscreenIntegerScale()

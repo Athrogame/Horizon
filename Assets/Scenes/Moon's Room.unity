@@ -920,6 +920,12 @@ MonoBehaviour:
   tabSelectedColor: {r: 0.784, g: 0.063, b: 0.18, a: 1}
   tabUnselectedColor: {r: 1, g: 1, b: 1, a: 1}
   rootPaper: {fileID: 2073270845}
+  exitQuitRow: 0
+  exitTitleRow: 1
+  disableExitToTitle: 1
+  exitQuitWarning: {fileID: 0}
+  volumeStep: 5
+  volumeStepFine: 1
   moveActionRef: {fileID: -1680190386980627800, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   interactActionRef: {fileID: 1781555164194001046, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   cancelActionRef: {fileID: 7727032971491509709, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
@@ -2369,7 +2375,7 @@ Camera:
   far clip plane: 1017.5
   field of view: 40.2
   orthographic: 1
-  orthographic size: 1
+  orthographic size: 7.75
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -2485,7 +2491,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &519624007
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11017,8 +11023,6 @@ MonoBehaviour:
   sectionArrow: {fileID: 0}
   arrowGap: 8
   sectionArrowOffset: {x: 6, y: 4}
-  barFilledChar: '#'
-  barEmptyChar: '-'
   chosenColor: {r: 1, g: 1, b: 1, a: 1}
   unchosenColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
   slideDuration: 0.35
