@@ -105,6 +105,11 @@ public class DialogueBox : MonoBehaviour
     private bool ignoreAdvanceInput = false;
     private Coroutine questionRoutine;
 
+    // True once the first line has started typing. While false, the panel is still
+    // sliding up and neither isDisplayingText nor canAdvance is set yet, so an
+    // advance press would otherwise be silently dropped for the whole slide duration.
+    private bool hasStartedFirstLine = false;
+
     private void SetActiveCount(bool active)
     {
         if (active && !isCountedAsActive)
@@ -210,6 +215,24 @@ public class DialogueBox : MonoBehaviour
             isFastForwarding = true;
         else if (canAdvance)
             AdvanceDialogue();
+        else if (!hasStartedFirstLine && dialogueQueue.Count > 0)
+            SkipIntroSlide();
+    }
+
+    // Lets the player skip the panel's slide-up animation by pressing advance early,
+    // instead of the box appearing unresponsive until the slide finishes.
+    private void SkipIntroSlide()
+    {
+        if (slideAnimationCoroutine != null)
+        {
+            StopCoroutine(slideAnimationCoroutine);
+            slideAnimationCoroutine = null;
+        }
+
+        if (rectTransform != null)
+            rectTransform.anchoredPosition = visiblePosition;
+
+        StartDisplayingText();
     }
 
     private void Update()
@@ -240,6 +263,7 @@ public class DialogueBox : MonoBehaviour
         dialogueQueue = new List<DialogueLine>(lines);
         currentDialogueIndex = 0;
         baseTextBeforeAppending = "";
+        hasStartedFirstLine = false;
 
         // Activate root-to-child so each SetActive fires OnEnable with an already-active parent,
         // guaranteeing gameObject.activeInHierarchy is true before StartCoroutine is called.
@@ -411,6 +435,8 @@ public class DialogueBox : MonoBehaviour
 
     private void StartDisplayingText()
     {
+        hasStartedFirstLine = true;
+
         if (currentDialogueIndex >= dialogueQueue.Count)
         {
             CloseDialogue();
