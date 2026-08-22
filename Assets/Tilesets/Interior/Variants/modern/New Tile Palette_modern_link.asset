@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1669948d9af04e2791deee185996222, type: 3}
+  m_Name: New Tile Palette_modern_link
+  m_EditorClassIdentifier: PaletteSwap.Editor::PaletteSwap.VariantLink
+  sourcePalette: {fileID: 7694619027228283595, guid: d07bf3096fc7b4960b0b0ac70b04b1e9, type: 3}
+  colorway: {fileID: 11400000, guid: f63db4e233dc14832ad0ba4b813c7b89, type: 2}

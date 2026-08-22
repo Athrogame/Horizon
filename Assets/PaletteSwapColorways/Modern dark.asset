@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46057d57dcaaa45a180f0012edc1320d, type: 3}
+  m_Name: Modern dark
+  m_EditorClassIdentifier: PaletteSwap.Editor::PaletteSwap.ColorwayAsset
+  mappings:
+  - from:
+      serializedVersion: 2
+      rgba: 4282735226
+    to:
+      serializedVersion: 2
+      rgba: 4279375917
+  - from:
+      serializedVersion: 2
+      rgba: 4284915929
+    to:
+      serializedVersion: 2
+      rgba: 4279774032
+  - from:
+      serializedVersion: 2
+      rgba: 4283920793
+    to:
+      serializedVersion: 2
+      rgba: 4279705144
+  - from:
+      serializedVersion: 2
+      rgba: 4283201958
+    to:
+      serializedVersion: 2
+      rgba: 4279377981
+  - from:
+      serializedVersion: 2
+      rgba: 4281746523
+    to:
+      serializedVersion: 2
+      rgba: 4279112226
+  - from:
+      serializedVersion: 2
+      rgba: 4283664056
+    to:
+      serializedVersion: 2
+      rgba: 4279444292
+  - from:
+      serializedVersion: 2
+      rgba: 4285444079
+    to:
+      serializedVersion: 2
+      rgba: 4279905880
